@@ -1,7 +1,7 @@
 # autoconstitution
 
-> **Karpathy's autoresearch, but for Constitutional AI.**
-> A hierarchy of LLMs that critique, revise, and fine-tune each other — guided by a constitution you can edit in Markdown.
+> **Autoresearch, but with multiple agents.**
+> A constitutional multi-agent improvement loop where agents propose, critique, revise, judge, and preserve better strategies under rules you edit in Markdown.
 
 [![license](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![python](https://img.shields.io/badge/python-3.9%2B-brightgreen.svg)](pyproject.toml)
@@ -11,65 +11,81 @@
 
 ## TL;DR
 
-You write a constitution in `constitution.md`. A **Student** model answers prompts, a **Judge** model critiques those answers against the constitution, the Student revises, and the whole trace becomes DPO training data. A **Meta-Judge** audits the Judges for drift. Rinse, repeat, ratchet. No humans in the loop, no API keys required if you run Ollama locally.
+`autoconstitution` starts from the core autoresearch pattern:
+
+1. try something
+2. evaluate it
+3. keep or revert
+
+But instead of a single agent iterating alone, it uses a small society of roles:
+
+- **Student** proposes
+- **Critic** attacks weak spots
+- **Teacher / Researcher** suggests better directions
+- **Judge** decides what survives
+- **Synthesizer** preserves useful findings across rounds
+
+The rules live in `constitution.md`, so the loop is not just trial-and-error. It improves under explicit principles you can inspect, diff, and change.
 
 ```bash
 pip install autoconstitution
 ollama pull llama3.1:8b           # or set ANTHROPIC_API_KEY / OPENAI_API_KEY / MOONSHOT_API_KEY
-autoconstitution cai run -p "Explain quantum tunneling like I'm 10"
+autoconstitution cai run -p "Design a better financial-analysis workflow for earnings revisions."
 ```
 
-**Output:** a JSONL of `(prompt, chosen, rejected)` triples ready for `trl`'s `DPOTrainer`.
+**Output:** a structured critique/revision trace plus chosen-vs-rejected pairs that can be exported for later ratcheting or DPO-style training.
 
 ---
 
 ## Why this exists
 
-Two ideas collided:
+Karpathy's autoresearch made a powerful idea legible: autonomous improvement becomes practical when the loop is small, measurable, and reversible.
 
-1. **Karpathy's autoresearch paradigm.** Run a tiny experiment (nanoGPT training, 5 minutes), keep-or-revert based on a single metric, iterate autonomously. The metric is the whole game.
-2. **Anthropic's Constitutional AI.** Instead of paying humans to label harmful vs. helpful answers, you write the principles down and let a model do the labelling. The training signal comes from AI feedback guided by a written constitution.
+But many real tasks are not best solved by one agent alone. In practice, improvement often looks like:
 
-**autoconstitution** is what you get when you mash those together and extend it to a *hierarchy* of agents:
+- one system proposes an approach
+- another argues why it fails
+- another rewrites it
+- another judges whether it actually improved the target
 
-```
-                    Meta-Judge  (audits judges, proposes constitution edits)
-                         │
-                         ▼
-                      Judge     (critiques students against constitution.md)
-                         │
-                         ▼
-                     Student    (answers prompts, revises on critique)
-```
+`autoconstitution` is an attempt to turn that pattern into a reusable product:
 
-The Student's `(initial_answer, revised_answer)` pairs become `(rejected, chosen)` for DPO. Train. Swap Student in. Run again. Each generation should score better on the ratchet — if it doesn't, the run is reverted. This is Karpathy's "keep or revert" loop, but the metric is alignment, not validation loss.
+- **multi-agent instead of single-agent**
+- **constitutional instead of ad hoc critique**
+- **ratcheted instead of vibe-based iteration**
 
-### Explained to a 10-year-old
+That makes it applicable to more than one domain. The same loop can be used to improve:
 
-Imagine a classroom. A student writes an essay. The teacher reads it and marks what's wrong, pointing at a rulebook on the wall. The student rewrites. The principal occasionally watches the teacher to make sure the teacher isn't just being grumpy. Over time, the students get better because the feedback is consistent and grounded in the rulebook — not in whatever mood anyone was in that day. `autoconstitution` is that classroom, but the students, teachers, and principal are all language models, and the rulebook is a markdown file you can edit.
+- coding agents
+- financial-analysis agents
+- research assistants
+- prompt and workflow systems
+- model behavior and training traces
 
-### Analogy for developers
+### A simple mental model
 
-Think of it like linting and CI for model behavior:
-- `constitution.md` = your `.eslintrc`
-- Student = the code being written
-- Judge = the linter
-- Meta-Judge = the review process that decides which lint rules were dumb
-- DPO training = autoformatting the codebase so it stops violating the rules
+Think of it as a classroom:
+
+- the **Student** answers
+- the **Critic** points out what is weak
+- the **Teacher** suggests a better direction
+- the **Judge** checks the answer against the rulebook
+- the **Synthesizer** writes down what the class learned
+
+The rulebook is `constitution.md`.
 
 ---
 
 ## Features
 
-- **Three-tier CAI hierarchy** — Student / Judge / Meta-Judge with clean Python dataclasses.
-- **Editable constitution** — it's just Markdown. Version-controlled, diff-able, PR-able.
-- **Multi-provider auto-detect** — Ollama first (free, local), then Kimi / Anthropic / OpenAI if env vars are set.
-- **Preference-pair export** — JSONL ready for `trl.DPOTrainer`, IPO, or KTO.
-- **TRL integration** — optional `[train]` extra wires in HuggingFace's `DPOTrainer` with PEFT/LoRA defaults.
-- **Model-collapse protection** — anti-collapse anchor dataset + diversity/entropy floors.
-- **Ratchet mechanism** — pluggable metrics gate every generation; regressions get auto-reverted.
-- **Multi-agent orchestrator** — task DAG, branch parallelism, cross-pollination bus.
-- **Apple Silicon aware** — MPS detection, optimal Ollama thread/GPU layer hints.
+- **Role-based multi-agent loop** — Student / Critic / Teacher / Judge / Meta-Judge-style structure for iterative improvement.
+- **Editable constitution** — behavior rules live in Markdown, not hidden prompts.
+- **Local-first provider path** — Ollama works out of the box for small builders.
+- **Cloud-model support** — Kimi / Anthropic / OpenAI integrations when stronger models are needed.
+- **Preference-pair export** — traces can become chosen-vs-rejected data for DPO-style training.
+- **Ratchet mechanism** — keep-or-revert gating for improvements.
+- **Optional orchestration layer** — branch/task/pollination infrastructure for more complex runs.
+- **Apple Silicon aware** — MPS and local hardware helpers for modest machines.
 
 ---
 
@@ -95,14 +111,14 @@ pip install "autoconstitution[all]"
 
 ### 1. Bring a provider
 
-The system auto-detects in this order:
+The system can run on local models first, then use cloud providers when available:
 
 | Priority | Provider  | How to enable                                    |
 |----------|-----------|--------------------------------------------------|
 | 1        | Ollama    | `brew install ollama && ollama pull llama3.1:8b` |
-| 2        | Kimi      | `export MOONSHOT_API_KEY=sk-…`                   |
-| 3        | Anthropic | `export ANTHROPIC_API_KEY=sk-ant-…`              |
-| 4        | OpenAI    | `export OPENAI_API_KEY=sk-…`                     |
+| 2        | Kimi      | `export MOONSHOT_API_KEY=sk-...`                 |
+| 3        | Anthropic | `export ANTHROPIC_API_KEY=sk-ant-...`            |
+| 4        | OpenAI    | `export OPENAI_API_KEY=sk-...`                   |
 
 Check what's live:
 
@@ -110,7 +126,7 @@ Check what's live:
 autoconstitution cai providers
 ```
 
-### 2. Run a critique-revision loop
+### 2. Run a critique / revision loop
 
 ```bash
 autoconstitution cai run -p "Explain why the sky is blue in 3 sentences."
@@ -119,8 +135,8 @@ autoconstitution cai run -p "Explain why the sky is blue in 3 sentences."
 Or batch from a file:
 
 ```bash
-echo "Explain quantum tunneling." > prompts.txt
-echo "What causes inflation?"     >> prompts.txt
+echo "Design a better financial-analysis workflow." > prompts.txt
+echo "Improve this research-assistant prompt stack." >> prompts.txt
 autoconstitution cai run \
   --prompts-file prompts.txt \
   --output outputs/pairs.jsonl \
@@ -128,13 +144,9 @@ autoconstitution cai run \
   --concurrency 4
 ```
 
-The output is a DPO-ready JSONL:
+### 3. Export or train (optional)
 
-```json
-{"prompt":"Explain quantum tunneling.","chosen":"Particles…","rejected":"Well, quantum mechanics is really…","source":"cai","metadata":{"rounds_used":2,"converged":true}}
-```
-
-### 3. Train (optional)
+The critique/revision trace can be turned into preference pairs for later tuning:
 
 ```python
 from pathlib import Path
@@ -154,63 +166,60 @@ print(metrics)
 
 ## How it works
 
-### The inner loop (Phase 1 — SL-CAI)
+### The inner loop
 
 ```python
 from autoconstitution.cai import StudentAgent, JudgeAgent, CritiqueRevisionLoop
 
 student = StudentAgent(provider=my_provider)
-judge   = JudgeAgent(provider=my_provider)
-loop    = CritiqueRevisionLoop(student, judge, max_rounds=3)
+judge = JudgeAgent(provider=my_provider)
+loop = CritiqueRevisionLoop(student, judge, max_rounds=3)
 
 result = await loop.run("Why is the sky blue?")
-result.chosen      # final, Judge-approved answer
-result.rejected    # initial answer
-result.critiques   # list of structured Judge verdicts
+result.chosen
+result.rejected
+result.critiques
 ```
 
-### The outer loop (Phase 2 — RLAIF/DPO)
+### The general pattern
 
-```
-while not converged:
-    trace    = CritiqueRevisionLoop.run_batch(prompts)
-    pairs    = PreferencePairBuilder().add_results(trace).add_anchor(human_pairs, 0.1)
-    new_wts  = run_dpo(DPOConfig(base_model=current_model, train_file=pairs.export_jsonl()))
-    if ratchet.validate(new_wts) is ACCEPT:
-        current_model = new_wts
-    else:
-        git_revert()
+```text
+task -> propose -> critique -> revise -> judge -> keep or revert
 ```
 
-The ratchet is configurable — `val_bpb`, helpfulness, harmlessness, or your own composite metric. See `autoconstitution/metrics/`.
+That pattern is the real product. The same loop can drive many task adapters as long as you provide:
+
+- a task
+- a constitution
+- an evaluator or ratchet
+
+### The outer loop
+
+For training-oriented runs, the trace can feed a ratcheted fine-tuning cycle:
+
+```text
+trace -> preference pairs -> train -> evaluate -> keep or revert
+```
+
+The ratchet can use `val_bpb`, helpfulness, harmlessness, or a custom composite metric.
 
 ---
 
 ## Project layout
 
-```
+```text
 codebase/
-├── constitution.md                    # ← edit this
+├── constitution.md                    # edit the rulebook
 ├── pyproject.toml
 ├── autoconstitution/
-│   ├── __init__.py                    # re-exports the public API
-│   ├── cli.py                         # `autoconstitution cai run/providers`
-│   ├── orchestrator.py                # SwarmOrchestrator, TaskDAG, PerformanceMonitor
-│   ├── ratchet.py                     # Ratchet, MetricConfig, keep-or-revert logic
-│   ├── config.py                      # Pydantic BaseSettings
-│   ├── cai/
-│   │   ├── hierarchy.py               # Student / Judge / Meta-Judge
-│   │   ├── critique_revision.py       # the inner loop
-│   │   ├── preference_pairs.py        # DPO dataset builder
-│   │   └── trl_trainer.py             # TRL DPO integration
-│   ├── providers/
-│   │   ├── auto_detect.py             # picks Ollama/Kimi/Anthropic/OpenAI
-│   │   ├── ollama.py
-│   │   ├── kimi.py
-│   │   ├── anthropic.py
-│   │   └── openai.py
-│   ├── metrics/                       # val_bpb and pluggable ratchet metrics
-│   └── hardware/                      # CUDA / MPS / Apple Silicon helpers
+│   ├── __init__.py                    # public API surface
+│   ├── cli.py                         # autoconstitution cai run/providers
+│   ├── cai/                           # student / judge / critique / pair building
+│   ├── ratchet.py                     # keep-or-revert logic
+│   ├── providers/                     # Ollama / Kimi / Anthropic / OpenAI
+│   ├── metrics/                       # pluggable evaluation metrics
+│   ├── hardware/                      # local hardware helpers
+│   └── orchestration pieces           # advanced branch/task orchestration
 └── tests/
 ```
 
@@ -218,32 +227,33 @@ codebase/
 
 ## Comparison
 
-|                 | Karpathy's autoresearch | Anthropic CAI (original) | autoconstitution          |
-|-----------------|-------------------------|--------------------------|---------------------------|
-| Agents          | 1                       | 2 (model + itself)       | 3+ tiered                 |
-| Signal          | `val_loss`              | `constitution.md`        | constitution + ratchet    |
-| Training        | nanoGPT                 | RLHF then RLAIF          | DPO (no reward model)     |
-| API keys needed | no                      | yes                      | no (Ollama fallback)      |
-| Parallelism     | 1 experiment            | 1 model                  | multi-agent swarm         |
-| Reversibility   | `git revert`            | manual                   | auto-ratchet              |
+|                      | Karpathy's autoresearch | Anthropic CAI | autoconstitution |
+|----------------------|-------------------------|---------------|------------------|
+| Core loop            | keep or revert          | critique / revise | critique / revise / judge / keep or revert |
+| Main structure       | one improving agent     | constitution-guided critique | multi-agent role society |
+| Rules                | metric-driven           | constitution-driven | constitution + ratchet |
+| Local-first option   | yes                     | not really     | yes via Ollama |
+| General applicability| medium                  | medium         | high if task adapters are good |
 
 ---
 
 ## Status
 
-Beta. The orchestrator, ratchet, CLI, and CAI loop are all wired and importable. The TRL trainer is a thin wrapper that works on both CUDA and MPS but has only been smoke-tested; expect to tune hyperparameters. APIs will tighten before 1.0.
+Beta. The constitutional loop, provider integrations, ratchet, and orchestration primitives are present, but the repo is still being tightened around a clearer product story.
 
 Known sharp edges:
-- `trl_trainer.run_dpo` requires `[train]` extras and a lot of VRAM / RAM.
-- Judge output parsing is forgiving but not bulletproof — small local models sometimes return prose instead of JSON. Use a larger model for the Judge tier.
-- Meta-Judge audit is present but not yet wired into automated constitution updates — that's the next release.
+
+- some internal docs still need cleanup to match the product framing
+- stronger hero examples are still needed
+- the end-to-end benchmark story is not yet where it should be
+- small local judges can still return messy output instead of structured critiques
 
 ---
 
 ## Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md). The constitution is an especially welcome place for PRs: if you think a principle is missing, unclear, or actively harmful, open one.
+See [CONTRIBUTING.md](CONTRIBUTING.md). `constitution.md` is intentionally a first-class artifact, so improvements to the rules, examples, and critique quality are especially welcome.
 
 ## License
 
-MIT. Use it, fork it, train on it.
+MIT. Use it, fork it, and adapt it to your own agents or systems.
