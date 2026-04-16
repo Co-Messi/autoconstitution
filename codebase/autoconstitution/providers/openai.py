@@ -39,6 +39,11 @@ from typing import (
     Union,
 )
 
+try:
+    import openai  # type: ignore
+except ImportError:  # pragma: no cover - optional dependency
+    openai = None  # type: ignore
+
 # =============================================================================
 # Exceptions
 # =============================================================================
@@ -94,8 +99,8 @@ class OpenAIInvalidRequestError(OpenAIError):
 class OpenAIServerError(OpenAIError):
     """Raised when OpenAI server returns an error."""
     
-    def __init__(self, message: str = "Server error", **kwargs: Any) -> None:
-        super().__init__(message, status_code=500, **kwargs)
+    def __init__(self, message: str = "Server error", status_code: int = 500, **kwargs: Any) -> None:
+        super().__init__(message, status_code=status_code, **kwargs)
 
 
 class OpenAITimeoutError(OpenAIError):
@@ -394,6 +399,10 @@ class OpenAIProvider(BaseProvider):
         """Get the token limit for a model."""
         model = model or self.default_model
         return self.MODEL_TOKEN_LIMITS.get(model, 4096)
+
+    def _get_model(self, request: CompletionRequest) -> str:
+        """Get the model for a request."""
+        return request.model or self.default_model
     
     async def initialize(self) -> None:
         """
@@ -406,9 +415,7 @@ class OpenAIProvider(BaseProvider):
         if self._initialized:
             return
         
-        try:
-            import openai
-        except ImportError:
+        if openai is None:
             raise ImportError(
                 "OpenAI provider requires 'openai' package. "
                 "Install with: pip install openai>=1.0.0"
@@ -441,9 +448,7 @@ class OpenAIProvider(BaseProvider):
     
     def _handle_error(self, error: Exception) -> OpenAIError:
         """Convert OpenAI errors to our error types."""
-        import openai
-        
-        if isinstance(error, openai.RateLimitError):
+        if openai is not None and isinstance(error, openai.RateLimitError):
             retry_after = None
             if hasattr(error, 'headers') and error.headers:
                 retry_after_str = error.headers.get('retry-after')
@@ -454,11 +459,11 @@ class OpenAIProvider(BaseProvider):
                 retry_after=retry_after,
                 status_code=429,
             )
-        elif isinstance(error, openai.AuthenticationError):
+        elif openai is not None and isinstance(error, openai.AuthenticationError):
             return OpenAIAuthenticationError(str(error))
-        elif isinstance(error, openai.BadRequestError):
+        elif openai is not None and isinstance(error, openai.BadRequestError):
             return OpenAIInvalidRequestError(str(error), status_code=400)
-        elif isinstance(error, openai.InternalServerError):
+        elif openai is not None and isinstance(error, openai.InternalServerError):
             return OpenAIServerError(str(error), status_code=500)
         elif isinstance(error, asyncio.TimeoutError):
             return OpenAITimeoutError(str(error))
@@ -866,7 +871,9 @@ class OpenAIProvider(BaseProvider):
     async def close(self) -> None:
         """Close the provider and release resources."""
         if self._client:
-            await self._client.close()
+            maybe_close = self._client.close()
+            if asyncio.iscoroutine(maybe_close):
+                await maybe_close
         self._initialized = False
     
     async def __aenter__(self) -> OpenAIProvider:

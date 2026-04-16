@@ -40,6 +40,11 @@ from typing import (
     Union,
 )
 
+try:
+    import anthropic  # type: ignore
+except ImportError:  # pragma: no cover - optional dependency
+    anthropic = None  # type: ignore
+
 # =============================================================================
 # Exceptions
 # =============================================================================
@@ -588,7 +593,9 @@ class AnthropicProvider:
     async def close(self) -> None:
         """Close the client and release resources."""
         if self._client and hasattr(self._client, 'close'):
-            await self._client.close()
+            maybe_close = self._client.close()
+            if asyncio.iscoroutine(maybe_close):
+                await maybe_close
         self._initialized = False
     
     async def __aenter__(self) -> AnthropicProvider:

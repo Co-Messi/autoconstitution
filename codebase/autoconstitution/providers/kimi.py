@@ -571,6 +571,16 @@ class KimiProvider:
         
         # Rate limit tracking
         self._last_rate_limit_info: Optional[RateLimitInfo] = None
+
+    @property
+    def default_model(self) -> str:
+        """Return the default model for this provider."""
+        return self.config.default_model
+
+    @property
+    def available_models(self) -> List[str]:
+        """Return the supported Kimi models."""
+        return ["kimi-k2-5", "kimi-k2", "kimi-k1-5"]
     
     async def initialize(self) -> None:
         """Initialize the provider."""
@@ -811,6 +821,9 @@ class KimiProvider:
             path="/chat/completions",
             json_data=body,
         )
+
+        if isinstance(response_data, CompletionResponse):
+            return response_data
         
         # Handle streaming case (shouldn't happen here)
         if isinstance(response_data, AsyncIterator):
@@ -879,25 +892,32 @@ class KimiProvider:
             json_data=body,
             stream=True,
         )
-        
-        # Handle non-streaming case (shouldn't happen here)
-        if not isinstance(response_stream, AsyncIterator):
+
+        async def _iterate() -> AsyncIterator[StreamChunk]:
+            if isinstance(response_stream, AsyncIterator):
+                async for chunk_data in response_stream:
+                    if isinstance(chunk_data, StreamChunk):
+                        yield chunk_data
+                        continue
+
+                    choice = chunk_data["choices"][0] if chunk_data.get("choices") else None
+                    if not choice:
+                        continue
+
+                    delta = choice.get("delta", {})
+                    finish_reason = choice.get("finish_reason")
+
+                    yield StreamChunk(
+                        content=delta.get("content", "") or "",
+                        is_finished=finish_reason is not None,
+                        finish_reason=finish_reason,
+                        tool_calls=delta.get("tool_calls"),
+                    )
+                return
+
             raise KimiError("Expected streaming response")
-        
-        async for chunk_data in response_stream:
-            choice = chunk_data["choices"][0] if chunk_data.get("choices") else None
-            if not choice:
-                continue
-            
-            delta = choice.get("delta", {})
-            finish_reason = choice.get("finish_reason")
-            
-            yield StreamChunk(
-                content=delta.get("content", "") or "",
-                is_finished=finish_reason is not None,
-                finish_reason=finish_reason,
-                tool_calls=delta.get("tool_calls"),
-            )
+
+        return _iterate()
     
     def register_tool(self, name: str, func: Callable[..., Any]) -> None:
         """
