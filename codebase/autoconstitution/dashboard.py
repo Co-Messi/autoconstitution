@@ -1,7 +1,7 @@
 """
 autoconstitution Terminal Dashboard
 
-A real-time terminal dashboard for monitoring swarm research operations,
+A real-time terminal dashboard for monitoring autoconstitution operations,
 agent statuses, ratchet scores, and cross-pollination activities.
 """
 
@@ -120,7 +120,7 @@ class BranchPerformance:
 
 @dataclass
 class SwarmState:
-    """Complete state of the swarm research system."""
+    """Complete state of the autoconstitution system."""
     agents: Dict[str, ResearchAgent] = field(default_factory=dict)
     ratchet: RatchetScore = field(default_factory=lambda: RatchetScore(0.0, 0.0, 0.0))
     cross_pollinations: List[CrossPollinationEvent] = field(default_factory=list)

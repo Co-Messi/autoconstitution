@@ -2,7 +2,7 @@
 
 ## Executive Summary
 
-This report analyzes safety implications for SwarmResearch and similar self-improving AI systems. Drawing from Constitutional AI research, reinforcement learning safety literature, and automated experimentation frameworks, we identify critical guardrails, constraint mechanisms, and monitoring strategies necessary to prevent runaway optimization, reward hacking, and degenerate solution discovery.
+This report analyzes safety implications for autoconstitution and similar self-improving AI systems. Drawing from Constitutional AI research, reinforcement learning safety literature, and automated experimentation frameworks, we identify critical guardrails, constraint mechanisms, and monitoring strategies necessary to prevent runaway optimization, reward hacking, and degenerate solution discovery.
 
 **Key Findings:**
 - Constitutional AI's critique-revision loop provides a foundational safety mechanism but requires adaptation for self-improving systems
@@ -100,7 +100,7 @@ Research demonstrates that Constitutional AI's negative constraints provide supe
 
 ### 2.4 Application to Self-Improving Systems
 
-For SwarmResearch, the critique mechanism should be extended:
+For autoconstitution, the critique mechanism should be extended:
 
 | Layer | Critique Target | Example Principle |
 |-------|-----------------|-------------------|
@@ -111,7 +111,7 @@ For SwarmResearch, the critique mechanism should be extended:
 
 ---
 
-## 3. Guardrail Recommendations for SwarmResearch
+## 3. Guardrail Recommendations for autoconstitution
 
 ### 3.1 Multi-Layer Defense Architecture
 
@@ -145,7 +145,7 @@ Adapted from Stanford's SAE framework for enterprise contexts [^339^]:
 | 2 | Partial | Human-in-the-loop approval, read-only access where possible, rollback mechanisms |
 | 3 | Conditional | Contextual boundary detection, confidence thresholds, drift detection, rate limiting |
 
-### 3.3 SwarmResearch-Specific Guardrails
+### 3.3 autoconstitution-Specific Guardrails
 
 | Component | Guardrail | Implementation |
 |-----------|-----------|----------------|
@@ -287,7 +287,7 @@ Monitor for these patterns that may precede failure:
 
 ---
 
-## 7. Recommendations for SwarmResearch Implementation
+## 7. Recommendations for autoconstitution Implementation
 
 ### 7.1 Immediate Actions (Phase 1)
 
@@ -317,7 +317,7 @@ Monitor for these patterns that may precede failure:
 
 ## 8. Conclusion
 
-Self-improving AI systems like SwarmResearch offer tremendous potential for accelerating scientific discovery, but require rigorous safety engineering. The research demonstrates that:
+Self-improving AI systems like autoconstitution offer tremendous potential for accelerating scientific discovery, but require rigorous safety engineering. The research demonstrates that:
 
 1. **Constitutional AI's critique-revision loop** provides a scalable foundation for alignment, but must be extended with execution-layer safeguards
 2. **Multi-layered guardrails** at input, execution, and output stages are essential
@@ -345,4 +345,4 @@ Key sources consulted:
 ---
 
 *Report generated: Safety Alignment Research for Self-Improving AI Systems*
-*Focus: SwarmResearch Safety Architecture*
+*Focus: autoconstitution Safety Architecture*

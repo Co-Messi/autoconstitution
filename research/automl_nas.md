@@ -391,7 +391,7 @@ Traditional NAS operates in a **constrained, predefined search space** with **no
 
 ---
 
-## Part 7: Implications for SwarmResearch Design
+## Part 7: Implications for autoconstitution Design
 
 ### Lessons from the Failure of Traditional NAS
 
@@ -434,7 +434,7 @@ Traditional NAS operates in a **constrained, predefined search space** with **no
    - Small model discoveries → large model improvements
    - Enables efficient exploration on cheap proxies
 
-### Design Principles for SwarmResearch
+### Design Principles for autoconstitution
 
 | Principle | Implementation |
 |-----------|---------------|
@@ -490,7 +490,7 @@ Traditional NAS failed because it was **blind optimization in a constrained spac
 
 The "Karpathy Loop" demonstrates that the future of automated research lies not in better evolutionary algorithms or Bayesian optimizers, but in **LLM agents that can understand, reason, learn, and create**—running thousands of experiments while humans focus on high-level direction and creative ideation.
 
-For SwarmResearch, the path forward is clear: embrace agent-driven research with multi-agent collaboration, open-ended exploration, and genuine learning from execution feedback—building on the lessons of why traditional NAS fell short while leveraging the transformative capabilities of modern LLMs.
+For autoconstitution, the path forward is clear: embrace agent-driven research with multi-agent collaboration, open-ended exploration, and genuine learning from execution feedback—building on the lessons of why traditional NAS fell short while leveraging the transformative capabilities of modern LLMs.
 
 ---
 

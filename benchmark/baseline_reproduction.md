@@ -2,7 +2,7 @@
 
 ## Executive Summary
 
-This document reproduces Andrej Karpathy's single-agent autoresearch baseline results, which serve as the comparison point that SwarmResearch must beat. The baseline demonstrates autonomous LLM training optimization through a single AI agent running experiments overnight on a single GPU.
+This document reproduces Andrej Karpathy's single-agent autoresearch baseline results, which serve as the comparison point that autoconstitution must beat. The baseline demonstrates autonomous LLM training optimization through a single AI agent running experiments overnight on a single GPU.
 
 **Key Baseline Metrics:**
 - **700 experiments** conducted autonomously over **2 days**
@@ -301,9 +301,9 @@ Based on analysis of kept improvements:
 
 ## 6. Baseline Comparison Framework
 
-### 6.1 Metrics SwarmResearch Must Beat
+### 6.1 Metrics autoconstitution Must Beat
 
-| Metric | Karpathy Baseline | SwarmResearch Target |
+| Metric | Karpathy Baseline | autoconstitution Target |
 |--------|-------------------|---------------------|
 | Experiments/24h (1 GPU) | ~100 | >100 |
 | Success rate | ~2.9% | >2.9% |
@@ -373,7 +373,7 @@ Karpathy's autoresearch baseline establishes a clear benchmark for autonomous LL
 - **11% training speedup** achieved
 - **100% transfer success** to larger models
 
-This baseline represents the state-of-the-art in single-agent autonomous research. SwarmResearch must demonstrate superior performance through multi-agent coordination, parallel exploration, and knowledge sharing to establish a new benchmark.
+This baseline represents the state-of-the-art in single-agent autonomous research. autoconstitution must demonstrate superior performance through multi-agent coordination, parallel exploration, and knowledge sharing to establish a new benchmark.
 
 ---
 

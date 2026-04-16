@@ -2,7 +2,7 @@
 
 ## Executive Summary
 
-State Space Models (SSMs) represent a fundamental shift in sequence modeling architecture, offering linear-time complexity as an alternative to the quadratic scaling of Transformers. Led by innovations like S4, H3, and Mamba, SSMs have demonstrated competitive performance with dramatically improved efficiency for long sequences. This report examines SSM fundamentals, efficiency advantages, performance characteristics, and implications for automated research systems like SwarmResearch.
+State Space Models (SSMs) represent a fundamental shift in sequence modeling architecture, offering linear-time complexity as an alternative to the quadratic scaling of Transformers. Led by innovations like S4, H3, and Mamba, SSMs have demonstrated competitive performance with dramatically improved efficiency for long sequences. This report examines SSM fundamentals, efficiency advantages, performance characteristics, and implications for automated research systems like autoconstitution.
 
 ---
 
@@ -305,7 +305,7 @@ search_space = {
 
 ---
 
-## 6. Implications for SwarmResearch
+## 6. Implications for autoconstitution
 
 ### 6.1 High-Impact Research Opportunities
 
@@ -329,7 +329,7 @@ search_space = {
 - Using Transformers as teachers for hybrid initialization
 - Expected outcome: Faster convergence, better performance
 
-### 6.2 Recommended SwarmResearch Priorities
+### 6.2 Recommended autoconstitution Priorities
 
 **Priority 1: Hybrid Architecture Search**
 ```
@@ -361,7 +361,7 @@ Search Space:
 Evaluation: Sample efficiency, final performance
 ```
 
-### 6.3 Integration with SwarmResearch Architecture
+### 6.3 Integration with autoconstitution Architecture
 
 **Agent Specializations**:
 1. **Architecture Agent**: Explores layer compositions and hybrid patterns
@@ -409,7 +409,7 @@ State Space Models represent a paradigm shift in sequence modeling, offering:
 3. **Dramatic efficiency gains** for long sequences (>1K tokens)
 4. **Complementary strengths** to Transformers (long-range vs. retrieval)
 
-**For SwarmResearch**, SSMs present significant opportunities:
+**For autoconstitution**, SSMs present significant opportunities:
 - Automated hybrid architecture discovery
 - Cross-domain parameter optimization
 - Training methodology innovation

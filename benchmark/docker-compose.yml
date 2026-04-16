@@ -1,5 +1,5 @@
 # docker-compose.yml
-# SwarmResearch Benchmark Container Orchestration
+# autoconstitution Benchmark Container Orchestration
 # Version: 1.0.0
 
 version: '3.8'
@@ -9,8 +9,8 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    image: swarmresearch/benchmark:1.0.0
-    container_name: swarmresearch-benchmark
+    image: autoconstitution/benchmark:1.0.0
+    container_name: autoconstitution-benchmark
     
     environment:
       - SWARMRESEARCH_SEED=42
@@ -52,10 +52,10 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    image: swarmresearch/benchmark:1.0.0
-    container_name: swarmresearch-verify
+    image: autoconstitution/benchmark:1.0.0
+    container_name: autoconstitution-verify
     command: >
-      python -m swarmresearch.verify --full
+      python -m autoconstitution.verify --full
     profiles:
       - verify
 
@@ -64,8 +64,8 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    image: swarmresearch/benchmark:1.0.0
-    container_name: swarmresearch-reproducibility
+    image: autoconstitution/benchmark:1.0.0
+    container_name: autoconstitution-reproducibility
     environment:
       - SWARMRESEARCH_SEED=42
     volumes:

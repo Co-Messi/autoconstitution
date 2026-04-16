@@ -1,5 +1,5 @@
 #!/bin/bash
-# reproduce.sh - One-command benchmark reproduction for SwarmResearch
+# reproduce.sh - One-command benchmark reproduction for autoconstitution
 # Version: 1.0.0
 
 set -e
@@ -30,7 +30,7 @@ OUTPUT_DIR=${2:-$RESULTS_DIR}
 # Print banner
 echo ""
 echo "╔══════════════════════════════════════════════════════════════╗"
-echo "║         SwarmResearch Benchmark Reproduction                 ║"
+echo "║         autoconstitution Benchmark Reproduction                 ║"
 echo "║                    Version $BENCHMARK_VERSION                         ║"
 echo "╚══════════════════════════════════════════════════════════════╝"
 echo ""
@@ -74,13 +74,13 @@ log_info "Dependencies installed."
 
 # Step 4: Download Assets
 log_step "4" "Downloading assets..."
-if ! python -c "import swarmresearch" 2>/dev/null; then
-    log_warn "swarmresearch package not found. Skipping asset download."
+if ! python -c "import autoconstitution" 2>/dev/null; then
+    log_warn "autoconstitution package not found. Skipping asset download."
     log_warn "Please ensure models and datasets are manually placed in:"
     log_warn "  - ./models/swarm-agent-small-3B-int8.gguf"
-    log_warn "  - ./datasets/swarmresearch_bench_v1/"
+    log_warn "  - ./datasets/autoconstitution_bench_v1/"
 else
-    python -m swarmresearch.download --dataset --model --verify || {
+    python -m autoconstitution.download --dataset --model --verify || {
         log_error "Asset download failed. Please check your internet connection."
         exit 1
     }
@@ -89,12 +89,12 @@ fi
 
 # Step 5: Verify Environment
 log_step "5" "Verifying environment..."
-if python -c "import swarmresearch" 2>/dev/null; then
-    python -m swarmresearch.verify --full || {
+if python -c "import autoconstitution" 2>/dev/null; then
+    python -m autoconstitution.verify --full || {
         log_warn "Environment verification had issues, but continuing..."
     }
 else
-    log_warn "swarmresearch package not available for verification."
+    log_warn "autoconstitution package not available for verification."
 fi
 
 # Step 6: Run Benchmark
@@ -104,24 +104,24 @@ RESULTS_FILE="$OUTPUT_DIR/run_${TIMESTAMP}_seed${SEED}.json"
 
 mkdir -p "$OUTPUT_DIR"
 
-if python -c "import swarmresearch" 2>/dev/null; then
-    python -m swarmresearch.benchmark \
+if python -c "import autoconstitution" 2>/dev/null; then
+    python -m autoconstitution.benchmark \
         --config "$CONFIG_FILE" \
         --output "$RESULTS_FILE" \
         --seed "$SEED" \
         --verbose || { log_error "Benchmark execution failed"; exit 1; }
     log_info "Benchmark completed successfully."
 else
-    log_error "swarmresearch package not found. Cannot run benchmark."
+    log_error "autoconstitution package not found. Cannot run benchmark."
     log_info "This is a template reproduction script."
-    log_info "Please install the swarmresearch-benchmark package to run actual benchmarks."
+    log_info "Please install the autoconstitution-benchmark package to run actual benchmarks."
     exit 1
 fi
 
 # Step 7: Generate Report
 log_step "7" "Generating report..."
-if python -c "import swarmresearch" 2>/dev/null; then
-    python -m swarmresearch.report \
+if python -c "import autoconstitution" 2>/dev/null; then
+    python -m autoconstitution.report \
         --results "$RESULTS_FILE" \
         --output "$OUTPUT_DIR/report_${TIMESTAMP}.html" || {
         log_warn "Report generation failed, but benchmark completed."

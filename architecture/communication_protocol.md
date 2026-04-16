@@ -1,8 +1,8 @@
-# SwarmResearch Inter-Agent Communication Protocol
+# autoconstitution Inter-Agent Communication Protocol
 
 ## Executive Summary
 
-This document defines the inter-agent communication protocol for SwarmResearch, a massively parallel collaborative AI research system. The protocol is designed to enable efficient, scalable, and reliable communication between hundreds of AI agents across multiple LLM providers.
+This document defines the inter-agent communication protocol for autoconstitution, a massively parallel collaborative AI research system. The protocol is designed to enable efficient, scalable, and reliable communication between hundreds of AI agents across multiple LLM providers.
 
 **Key Design Decisions:**
 - Hybrid protocol combining A2A-inspired agent discovery with MCP-inspired tool integration
@@ -96,12 +96,12 @@ This document defines the inter-agent communication protocol for SwarmResearch, 
 
 ### 2.1 Core Message Schema
 
-All messages in SwarmResearch follow a unified envelope format:
+All messages in autoconstitution follow a unified envelope format:
 
 ```python
 # Core message envelope - all messages wrap this structure
 class SwarmMessage(BaseModel):
-    """Universal message envelope for SwarmResearch"""
+    """Universal message envelope for autoconstitution"""
     
     # Identity
     message_id: UUID                    # Unique message identifier
@@ -1745,8 +1745,8 @@ class A2AAdapter:
             "description": agent_info.description,
             "url": f"{self.swarm.base_url}/agents/{agent_info.agent_id}",
             "provider": {
-                "organization": "SwarmResearch",
-                "url": "https://swarmresearch.ai"
+                "organization": "autoconstitution",
+                "url": "https://autoconstitution.ai"
             },
             "version": agent_info.version,
             "documentationUrl": f"{self.swarm.base_url}/docs/{agent_info.agent_id}",
@@ -1785,7 +1785,7 @@ class A2AAdapter:
         # Convert A2A task to internal format
         task = self._from_a2a_task(a2a_task)
         
-        # Submit through SwarmResearch protocol
+        # Submit through autoconstitution protocol
         result = await self.swarm.submit_task(task)
         
         # Convert result back to A2A format

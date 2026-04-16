@@ -1,7 +1,7 @@
 # LLM-Powered Autonomous Agents: State-of-the-Art Research Report
 
 **Research Date:** 2025  
-**Purpose:** Survey of agent frameworks, multi-agent patterns, tool use, memory management, planning, and best practices for SwarmResearch
+**Purpose:** Survey of agent frameworks, multi-agent patterns, tool use, memory management, planning, and best practices for autoconstitution
 
 ---
 
@@ -489,11 +489,11 @@ System-1 LLM → Reasoning Model (CoT) → Agent Model (CoA)
 
 ---
 
-## 7. Integration Patterns for SwarmResearch
+## 7. Integration Patterns for autoconstitution
 
 ### 7.1 Recommended Architecture
 
-Based on the research, SwarmResearch should consider:
+Based on the research, autoconstitution should consider:
 
 **Core Framework:** LangGraph or CrewAI
 - LangGraph for maximum control and complex workflows
@@ -567,7 +567,7 @@ The LLM agent landscape in 2025 is characterized by:
 4. **Memory Evolution:** Moving from simple RAG to hierarchical cognitive architectures
 5. **Planning Sophistication:** ReAct + CoT/ToT as foundational, with RL enhancements emerging
 
-**For SwarmResearch:**
+**For autoconstitution:**
 - Start with proven patterns (Orchestrator-Worker)
 - Choose framework based on complexity needs (LangGraph for control, CrewAI for speed)
 - Invest in memory and context management early

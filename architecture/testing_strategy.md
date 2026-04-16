@@ -1,8 +1,8 @@
-# SwarmResearch Comprehensive Testing Strategy
+# autoconstitution Comprehensive Testing Strategy
 
 ## Executive Summary
 
-This document defines the comprehensive testing strategy for SwarmResearch, a massively parallel multi-agent AI research system. The testing approach follows a **multi-layered pyramid** that ensures correctness at every level—from individual components to full-system benchmarks.
+This document defines the comprehensive testing strategy for autoconstitution, a massively parallel multi-agent AI research system. The testing approach follows a **multi-layered pyramid** that ensures correctness at every level—from individual components to full-system benchmarks.
 
 ### Testing Philosophy
 
@@ -474,7 +474,7 @@ tests/
 # tests/integration/test_orchestrator_flow/test_research_workflow.py
 import pytest
 import asyncio
-from swarm_research.orchestrator import SwarmResearchOrchestrator, ResearchContext
+from swarm_research.orchestrator import autoconstitutionOrchestrator, ResearchContext
 
 
 @pytest.mark.integration
@@ -491,7 +491,7 @@ class TestResearchWorkflow:
             max_depth=2,
             exploration_budget=10
         )
-        orchestrator = SwarmResearchOrchestrator(
+        orchestrator = autoconstitutionOrchestrator(
             context=context,
             max_concurrent_agents=3,
             provider=mock_provider
@@ -1020,7 +1020,7 @@ import uuid
 from datetime import datetime
 
 
-# Custom strategies for SwarmResearch
+# Custom strategies for autoconstitution
 
 def agent_addresses():
     """Strategy for generating valid agent addresses."""
@@ -1599,7 +1599,7 @@ class TestProviderLatency:
 import pytest
 import asyncio
 import time
-from swarm_research.orchestrator import SwarmResearchOrchestrator
+from swarm_research.orchestrator import autoconstitutionOrchestrator
 from swarm_research.benchmark import BenchmarkReporter
 
 
@@ -1614,7 +1614,7 @@ class TestSystemThroughput:
     async def test_tasks_per_second(self, reporter):
         """Measure task completion rate."""
         # Arrange
-        orchestrator = SwarmResearchOrchestrator(max_concurrent_agents=10)
+        orchestrator = autoconstitutionOrchestrator(max_concurrent_agents=10)
         await orchestrator.initialize()
         
         task_count = 100
@@ -1687,7 +1687,7 @@ import pytest
 import asyncio
 import time
 import statistics
-from swarm_research.orchestrator import SwarmResearchOrchestrator
+from swarm_research.orchestrator import autoconstitutionOrchestrator
 from swarm_research.benchmark import BenchmarkReporter
 
 
@@ -1704,7 +1704,7 @@ class TestScalability:
         results = []
         
         for agent_count in [1, 2, 5, 10, 20, 50]:
-            orchestrator = SwarmResearchOrchestrator(
+            orchestrator = autoconstitutionOrchestrator(
                 max_concurrent_agents=agent_count
             )
             await orchestrator.initialize()
@@ -1754,7 +1754,7 @@ class TestScalability:
             # Measure baseline
             baseline_mem = process.memory_info().rss / 1024 / 1024  # MB
             
-            orchestrator = SwarmResearchOrchestrator(
+            orchestrator = autoconstitutionOrchestrator(
                 max_concurrent_agents=agent_count
             )
             await orchestrator.initialize()
@@ -1852,7 +1852,7 @@ class KarpathyBaseline:
 
 @pytest.mark.benchmark
 class TestBaselineComparison:
-    """Compare SwarmResearch against Karpathy baseline."""
+    """Compare autoconstitution against Karpathy baseline."""
     
     @pytest.fixture
     def baseline(self):
@@ -1876,7 +1876,7 @@ class TestBaselineComparison:
             # Baseline
             baseline_result = await baseline.solve(problem)
             
-            # SwarmResearch
+            # autoconstitution
             swarm_result = await self._run_swarm(problem)
             
             improvement = (
@@ -1893,13 +1893,13 @@ class TestBaselineComparison:
         
         reporter.record({"time_comparison": results})
         
-        # Assert SwarmResearch is faster
+        # Assert autoconstitution is faster
         avg_improvement = statistics.mean(r["improvement_percent"] for r in results)
         assert avg_improvement > 20, f"Not enough improvement: {avg_improvement}%"
     
     async def _run_swarm(self, problem: str):
-        """Run problem through SwarmResearch."""
-        orchestrator = SwarmResearchOrchestrator(max_concurrent_agents=5)
+        """Run problem through autoconstitution."""
+        orchestrator = autoconstitutionOrchestrator(max_concurrent_agents=5)
         await orchestrator.initialize()
         
         start = time.perf_counter()
@@ -2205,4 +2205,4 @@ if __name__ == "__main__":
 
 ---
 
-*This testing strategy ensures SwarmResearch maintains high quality while enabling rapid iteration and confident deployments.*
+*This testing strategy ensures autoconstitution maintains high quality while enabling rapid iteration and confident deployments.*

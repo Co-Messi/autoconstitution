@@ -1,5 +1,5 @@
 """
-Environment documentation and verification for SwarmResearch benchmark.
+Environment documentation and verification for autoconstitution benchmark.
 
 This module captures and documents the complete environment state
 to ensure reproducibility across different systems.
@@ -154,7 +154,7 @@ def capture_hardware_info() -> Dict[str, Any]:
 
 def capture_relevant_env_vars() -> Dict[str, str]:
     """
-    Capture SwarmResearch-related environment variables.
+    Capture autoconstitution-related environment variables.
     
     Returns:
         Dictionary of relevant environment variables
@@ -304,7 +304,7 @@ def check_m4_compatibility() -> Dict[str, Any]:
 
 if __name__ == "__main__":
     # Run environment capture when executed directly
-    print("SwarmResearch Benchmark Environment Capture")
+    print("autoconstitution Benchmark Environment Capture")
     print("=" * 50)
     print()
     

@@ -1,8 +1,8 @@
-# SwarmResearch Parallel Branch Architecture
+# autoconstitution Parallel Branch Architecture
 
 ## Executive Summary
 
-This document defines the Git-based parallel branch architecture for SwarmResearch, designed to support 100+ simultaneous research directions with automated merging, conflict resolution, and meta-agent arbitration.
+This document defines the Git-based parallel branch architecture for autoconstitution, designed to support 100+ simultaneous research directions with automated merging, conflict resolution, and meta-agent arbitration.
 
 ---
 
@@ -69,7 +69,7 @@ DIRECTION_CATEGORIES = {
 ### 2.1 Worktree Layout for Parallel Development
 
 ```
-/swarm-research/
+/autoconstitution/
 ├── main/                    # Primary worktree (main branch)
 ├── develop/                 # Integration worktree
 ├── worktrees/               # Agent worktrees (up to 100)
@@ -163,7 +163,7 @@ git merge -s octopus \
 
 ```python
 #!/usr/bin/env python3
-"""SwarmResearch Automated Merge Protocol"""
+"""autoconstitution Automated Merge Protocol"""
 
 class MergeProtocol:
     def __init__(self):
@@ -433,7 +433,7 @@ Conflict Detected
 
 ```bash
 #!/bin/bash
-# swarm-branch: SwarmResearch branch management
+# swarm-branch: autoconstitution branch management
 
 COMMAND=$1
 shift
@@ -616,9 +616,9 @@ Timestamp: {datetime.now().isoformat()}
 ```bash
 # .git/hooks/pre-commit
 #!/bin/bash
-# Pre-commit hook for SwarmResearch
+# Pre-commit hook for autoconstitution
 
-echo "Running SwarmResearch pre-commit checks..."
+echo "Running autoconstitution pre-commit checks..."
 
 # Check branch naming convention
 BRANCH=$(git branch --show-current)
@@ -649,7 +649,7 @@ exit 0
 ```bash
 # .git/hooks/post-merge
 #!/bin/bash
-# Post-merge hook for SwarmResearch
+# Post-merge hook for autoconstitution
 
 MERGE_COMMIT=$(git rev-parse HEAD)
 PARENT_COUNT=$(git rev-list --parents -n1 $MERGE_COMMIT | wc -w)
@@ -674,7 +674,7 @@ python -m swarm.notify --event merge --commit $MERGE_COMMIT
 
 ```yaml
 # .github/workflows/swarm-automation.yml
-name: SwarmResearch Automation
+name: autoconstitution Automation
 
 on:
   push:
@@ -999,7 +999,7 @@ prune_worktrees() {
 }
 
 # Main execution
-echo "=== SwarmResearch Cleanup ==="
+echo "=== autoconstitution Cleanup ==="
 echo "Starting cleanup at $(date)"
 
 # Find and process stale branches
@@ -1040,7 +1040,7 @@ from datetime import datetime
 from collections import defaultdict
 
 class SwarmMetrics:
-    """Collect and report SwarmResearch metrics."""
+    """Collect and report autoconstitution metrics."""
     
     def __init__(self, repo_path: str = "."):
         self.repo_path = repo_path
@@ -1335,7 +1335,7 @@ meta_agent:
 ## Appendix A: Git Configuration
 
 ```bash
-# Recommended Git configuration for SwarmResearch
+# Recommended Git configuration for autoconstitution
 
 # Enable rerere for automatic conflict resolution
  git config --global rerere.enabled true
@@ -1359,4 +1359,4 @@ git config core.hooksPath .githooks
 
 *Document Version: 1.0*
 *Last Updated: 2025-01-15*
-*Author: SwarmResearch Architecture Team*
+*Author: autoconstitution Architecture Team*

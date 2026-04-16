@@ -1,11 +1,11 @@
-# SwarmResearch Plugin Architecture
+# autoconstitution Plugin Architecture
 ## Extensible Plugin System Design
 
 ---
 
 ## Executive Summary
 
-The SwarmResearch Plugin Architecture provides a clean, extensible framework for customizing all major aspects of the research system. This design transforms SwarmResearch from a single-purpose demo into a general-purpose platform for AI-driven research automation.
+The autoconstitution Plugin Architecture provides a clean, extensible framework for customizing all major aspects of the research system. This design transforms autoconstitution from a single-purpose demo into a general-purpose platform for AI-driven research automation.
 
 **Key Design Goals:**
 1. **Modularity**: Each plugin type has a well-defined, minimal interface
@@ -59,7 +59,7 @@ The SwarmResearch Plugin Architecture provides a clean, extensible framework for
 │  │                                                                      │   │
 │  │   Entry Points      File System        Decorators       Config      │   │
 │  │   ───────────       ──────────         ──────────       ──────      │   │
-│  │   swarmresearch.    plugins/           @register_         YAML      │   │
+│  │   autoconstitution.    plugins/           @register_         YAML      │   │
 │  │     metrics           ├── metrics/       metric          Files      │   │
 │  │     providers         ├── providers/   @register_                     │   │
 │  │     training          ├── training/      provider                    │   │
@@ -104,7 +104,7 @@ Plugin Architecture Core Principles
 ### 2.1 Base Plugin Interface
 
 ```python
-# swarmresearch/plugins/base.py
+# autoconstitution/plugins/base.py
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
@@ -152,7 +152,7 @@ class PluginHealth:
     performance_metrics: Dict[str, float] = None
 
 
-class SwarmResearchPlugin(ABC):
+class autoconstitutionPlugin(ABC):
     """
     Base interface that ALL plugins must implement.
     
@@ -186,13 +186,13 @@ class SwarmResearchPlugin(ABC):
         return self.metadata.config_schema
 
 
-T = TypeVar('T', bound=SwarmResearchPlugin)
+T = TypeVar('T', bound=autoconstitutionPlugin)
 ```
 
 ### 2.2 Ratchet Metric Interface
 
 ```python
-# swarmresearch/plugins/interfaces/metrics.py
+# autoconstitution/plugins/interfaces/metrics.py
 
 from abc import abstractmethod
 from dataclasses import dataclass
@@ -200,7 +200,7 @@ from typing import Dict, Any, Optional, List, Callable
 from enum import Enum
 import numpy as np
 
-from .base import SwarmResearchPlugin, PluginMetadata, PluginType
+from .base import autoconstitutionPlugin, PluginMetadata, PluginType
 
 
 class OptimizationDirection(Enum):
@@ -231,7 +231,7 @@ class ComparisonResult:
     epsilon_used: float
 
 
-class RatchetMetric(SwarmResearchPlugin):
+class RatchetMetric(autoconstitutionPlugin):
     """
     Interface for ratchet metrics that determine keep/discard decisions.
     
@@ -292,7 +292,7 @@ class RatchetMetric(SwarmResearchPlugin):
 ### 2.3 LLM Provider Interface
 
 ```python
-# swarmresearch/plugins/interfaces/providers.py
+# autoconstitution/plugins/interfaces/providers.py
 
 from abc import abstractmethod
 from dataclasses import dataclass, field
@@ -300,7 +300,7 @@ from typing import Dict, Any, Optional, List, AsyncIterator
 from enum import Enum, auto
 import time
 
-from .base import SwarmResearchPlugin, PluginMetadata, PluginType
+from .base import autoconstitutionPlugin, PluginMetadata, PluginType
 
 
 class ProviderCapability(Enum):
@@ -372,7 +372,7 @@ class ProviderCapabilities:
     cost_per_1k_tokens: Dict[str, float]
 
 
-class LLMProvider(SwarmResearchPlugin):
+class LLMProvider(autoconstitutionPlugin):
     """
     Interface for LLM providers.
     
@@ -469,7 +469,7 @@ class LLMProvider(SwarmResearchPlugin):
 ### 2.4 Training Target Interface
 
 ```python
-# swarmresearch/plugins/interfaces/training.py
+# autoconstitution/plugins/interfaces/training.py
 
 from abc import abstractmethod
 from dataclasses import dataclass, field
@@ -477,7 +477,7 @@ from typing import Dict, Any, Optional, List, AsyncIterator, Callable
 from enum import Enum, auto
 from pathlib import Path
 
-from .base import SwarmResearchPlugin, PluginMetadata, PluginType
+from .base import autoconstitutionPlugin, PluginMetadata, PluginType
 from .metrics import RatchetMetric, MetricValue
 
 
@@ -550,12 +550,12 @@ class TrainingProgress:
     logs: List[str]
 
 
-class TrainingTarget(SwarmResearchPlugin):
+class TrainingTarget(autoconstitutionPlugin):
     """
     Interface for training targets.
     
     Training targets define WHAT is being trained and HOW.
-    This enables SwarmResearch to optimize different types of models
+    This enables autoconstitution to optimize different types of models
     beyond just language models.
     """
     
@@ -653,7 +653,7 @@ class TrainingTarget(SwarmResearchPlugin):
 ### 2.5 Experiment Runner Interface
 
 ```python
-# swarmresearch/plugins/interfaces/runners.py
+# autoconstitution/plugins/interfaces/runners.py
 
 from abc import abstractmethod
 from dataclasses import dataclass, field
@@ -661,7 +661,7 @@ from typing import Dict, Any, Optional, List, AsyncIterator
 from enum import Enum, auto
 from pathlib import Path
 
-from .base import SwarmResearchPlugin, PluginMetadata, PluginType
+from .base import autoconstitutionPlugin, PluginMetadata, PluginType
 from .training import TrainingConfig, TrainingResult
 
 
@@ -740,7 +740,7 @@ class ResourceAllocation:
     estimated_duration_hours: float
 
 
-class ExperimentRunner(SwarmResearchPlugin):
+class ExperimentRunner(autoconstitutionPlugin):
     """
     Interface for experiment runners.
     
@@ -836,7 +836,7 @@ class ExperimentRunner(SwarmResearchPlugin):
 ### 3.1 Plugin Registry
 
 ```python
-# swarmresearch/plugins/registry.py
+# autoconstitution/plugins/registry.py
 
 import importlib
 import importlib.metadata
@@ -846,7 +846,7 @@ from typing import Dict, List, Type, Optional, Callable
 import logging
 import sys
 
-from .base import SwarmResearchPlugin, PluginMetadata, PluginType
+from .base import autoconstitutionPlugin, PluginMetadata, PluginType
 
 
 logger = logging.getLogger(__name__)
@@ -867,7 +867,7 @@ class PluginRegistry:
         if self._initialized:
             return
         
-        self._plugins: Dict[str, SwarmResearchPlugin] = {}
+        self._plugins: Dict[str, autoconstitutionPlugin] = {}
         self._plugin_classes: Dict[PluginType, Dict[str, Type]] = {
             plugin_type: {} for plugin_type in PluginType
         }
@@ -877,12 +877,12 @@ class PluginRegistry:
     def register(
         self,
         name: str,
-        plugin_class: Type[SwarmResearchPlugin],
+        plugin_class: Type[autoconstitutionPlugin],
         factory: Optional[Callable] = None
     ) -> None:
         """Register a plugin class."""
-        if not issubclass(plugin_class, SwarmResearchPlugin):
-            raise ValueError("Plugin must inherit from SwarmResearchPlugin")
+        if not issubclass(plugin_class, autoconstitutionPlugin):
+            raise ValueError("Plugin must inherit from autoconstitutionPlugin")
         
         temp_instance = plugin_class()
         plugin_type = temp_instance.metadata.plugin_type
@@ -893,7 +893,7 @@ class PluginRegistry:
         
         logger.info(f"Registered {plugin_type.name} plugin: {name}")
     
-    def register_instance(self, name: str, plugin: SwarmResearchPlugin) -> None:
+    def register_instance(self, name: str, plugin: autoconstitutionPlugin) -> None:
         """Register a pre-configured plugin instance."""
         self._plugins[name] = plugin
         logger.info(f"Registered plugin instance: {name}")
@@ -904,10 +904,10 @@ class PluginRegistry:
         
         if group is None:
             groups = [
-                "swarmresearch.metrics",
-                "swarmresearch.providers",
-                "swarmresearch.training",
-                "swarmresearch.runners",
+                "autoconstitution.metrics",
+                "autoconstitution.providers",
+                "autoconstitution.training",
+                "autoconstitution.runners",
             ]
         else:
             groups = [group]
@@ -946,8 +946,8 @@ class PluginRegistry:
                 for attr_name in dir(module):
                     attr = getattr(module, attr_name)
                     if (isinstance(attr, type) and 
-                        issubclass(attr, SwarmResearchPlugin) and
-                        attr is not SwarmResearchPlugin):
+                        issubclass(attr, autoconstitutionPlugin) and
+                        attr is not autoconstitutionPlugin):
                         
                         self.register(attr_name, attr)
                         count += 1
@@ -965,8 +965,8 @@ class PluginRegistry:
         
         default_dirs = [
             "./plugins",
-            "~/.swarmresearch/plugins",
-            "/usr/local/share/swarmresearch/plugins",
+            "~/.autoconstitution/plugins",
+            "/usr/local/share/autoconstitution/plugins",
         ]
         
         for dir_path in default_dirs:
@@ -984,7 +984,7 @@ class PluginRegistry:
         name: str,
         plugin_type: Optional[PluginType] = None,
         config: Optional[dict] = None
-    ) -> SwarmResearchPlugin:
+    ) -> autoconstitutionPlugin:
         """Get a plugin instance."""
         if name in self._plugins:
             return self._plugins[name]
@@ -1083,21 +1083,21 @@ def register_plugin(name: str):
 # pyproject.toml example for a plugin package:
 
 [project]
-name = "swarmresearch-metrics-extra"
+name = "autoconstitution-metrics-extra"
 version = "1.0.0"
 
-[project.entry-points."swarmresearch.metrics"]
-perplexity = "swarmresearch_metrics_extra:PerplexityMetric"
-bleu = "swarmresearch_metrics_extra:BleuMetric"
-rouge = "swarmresearch_metrics_extra:RougeMetric"
+[project.entry-points."autoconstitution.metrics"]
+perplexity = "autoconstitution_metrics_extra:PerplexityMetric"
+bleu = "autoconstitution_metrics_extra:BleuMetric"
+rouge = "autoconstitution_metrics_extra:RougeMetric"
 
-[project.entry-points."swarmresearch.providers"]
-groq = "swarmresearch_providers_extra:GroqProvider"
-cohere = "swarmresearch_providers_extra:CohereProvider"
+[project.entry-points."autoconstitution.providers"]
+groq = "autoconstitution_providers_extra:GroqProvider"
+cohere = "autoconstitution_providers_extra:CohereProvider"
 
-[project.entry-points."swarmresearch.training"]
-rlhf = "swarmresearch_training_extra:RLHFTarget"
-dpo = "swarmresearch_training_extra:DPOTarget"
+[project.entry-points."autoconstitution.training"]
+rlhf = "autoconstitution_training_extra:RLHFTarget"
+dpo = "autoconstitution_training_extra:DPOTarget"
 ```
 
 ---
@@ -1107,7 +1107,7 @@ dpo = "swarmresearch_training_extra:DPOTarget"
 ### 4.1 Lifecycle Manager
 
 ```python
-# swarmresearch/plugins/lifecycle.py
+# autoconstitution/plugins/lifecycle.py
 
 import asyncio
 from typing import Dict, List, Optional
@@ -1116,7 +1116,7 @@ from enum import Enum, auto
 import logging
 import time
 
-from .base import SwarmResearchPlugin, PluginHealth
+from .base import autoconstitutionPlugin, PluginHealth
 from .registry import registry
 
 
@@ -1139,7 +1139,7 @@ class PluginState(Enum):
 class PluginInstance:
     """Managed plugin instance with lifecycle state."""
     name: str
-    plugin: SwarmResearchPlugin
+    plugin: autoconstitutionPlugin
     state: PluginState
     config: Dict
     load_time: Optional[float] = None
@@ -1355,7 +1355,7 @@ class PluginLifecycleManager:
 ### 5.1 Bits Per Byte Metric
 
 ```python
-# swarmresearch/plugins/builtin/metrics.py
+# autoconstitution/plugins/builtin/metrics.py
 
 import numpy as np
 import time
@@ -1508,7 +1508,7 @@ class InferenceSpeedMetric(RatchetMetric):
 ### 5.2 Kimi Provider
 
 ```python
-# swarmresearch/plugins/builtin/providers.py
+# autoconstitution/plugins/builtin/providers.py
 
 import httpx
 import time
@@ -1914,7 +1914,7 @@ class OllamaProvider(LLMProvider):
 ### 5.3 Language Model Training Target
 
 ```python
-# swarmresearch/plugins/builtin/training.py
+# autoconstitution/plugins/builtin/training.py
 
 import torch
 import torch.nn as nn
@@ -2181,7 +2181,7 @@ class RLHFTarget(TrainingTarget):
 ### 5.4 Local Experiment Runner
 
 ```python
-# swarmresearch/plugins/builtin/runners.py
+# autoconstitution/plugins/builtin/runners.py
 
 import asyncio
 import subprocess
@@ -2261,7 +2261,7 @@ class LocalRunner(ExperimentRunner):
     ) -> subprocess.Popen:
         """Start training subprocess."""
         cmd = [
-            "python", "-m", "swarmresearch.training",
+            "python", "-m", "autoconstitution.training",
             "--config", str(exp_dir / "config.json"),
             "--output-dir", str(exp_dir)
         ]
@@ -2404,7 +2404,7 @@ class LocalRunner(ExperimentRunner):
 ### 6.1 Configuration Schema
 
 ```python
-# swarmresearch/plugins/config.py
+# autoconstitution/plugins/config.py
 
 from dataclasses import dataclass, field
 from typing import Dict, Any, List, Optional
@@ -2429,10 +2429,10 @@ class PluginSystemConfig:
     auto_discover: bool = True
     plugin_directories: List[str] = field(default_factory=list)
     entry_point_groups: List[str] = field(default_factory=lambda: [
-        "swarmresearch.metrics",
-        "swarmresearch.providers",
-        "swarmresearch.training",
-        "swarmresearch.runners",
+        "autoconstitution.metrics",
+        "autoconstitution.providers",
+        "autoconstitution.training",
+        "autoconstitution.runners",
     ])
     
     metrics: Dict[str, PluginConfig] = field(default_factory=dict)
@@ -2494,10 +2494,10 @@ class PluginSystemConfig:
             auto_discover=data.get('auto_discover', True),
             plugin_directories=data.get('plugin_directories', []),
             entry_point_groups=data.get('entry_point_groups', [
-                "swarmresearch.metrics",
-                "swarmresearch.providers",
-                "swarmresearch.training",
-                "swarmresearch.runners",
+                "autoconstitution.metrics",
+                "autoconstitution.providers",
+                "autoconstitution.training",
+                "autoconstitution.runners",
             ]),
             metrics=metrics,
             providers=providers,
@@ -2552,13 +2552,13 @@ class PluginSystemConfig:
 ### 6.2 Example Configuration File
 
 ```yaml
-# swarmresearch_plugins.yaml
+# autoconstitution_plugins.yaml
 
 # Discovery settings
 auto_discover: true
 plugin_directories:
   - ./custom_plugins
-  - /opt/swarmresearch/plugins
+  - /opt/autoconstitution/plugins
 
 # Default selections
 default_metric: bits_per_byte
@@ -2646,10 +2646,10 @@ auto_restart: true
 
 ```python
 # Initialize plugin system
-from swarmresearch.plugins import PluginSystemConfig, registry, lifecycle
+from autoconstitution.plugins import PluginSystemConfig, registry, lifecycle
 
 # Load configuration
-config = PluginSystemConfig.from_file("swarmresearch_plugins.yaml")
+config = PluginSystemConfig.from_file("autoconstitution_plugins.yaml")
 
 # Discover plugins
 registry.discover_all(config.plugin_directories)
@@ -2678,10 +2678,10 @@ provider = registry.get("kimi")
 
 ```python
 # my_custom_metric.py
-from swarmresearch.plugins.interfaces.metrics import (
+from autoconstitution.plugins.interfaces.metrics import (
     RatchetMetric, MetricValue, ComparisonResult, OptimizationDirection
 )
-from swarmresearch.plugins.registry import register_plugin
+from autoconstitution.plugins.registry import register_plugin
 
 @register_plugin("my_metric")
 class MyCustomMetric(RatchetMetric):
@@ -2717,7 +2717,7 @@ class MyCustomMetric(RatchetMetric):
 ### 7.3 Plugin Package Structure
 
 ```
-my-swarmresearch-plugin/
+my-autoconstitution-plugin/
 ├── pyproject.toml
 ├── README.md
 └── my_plugin/
@@ -2731,14 +2731,14 @@ my-swarmresearch-plugin/
 ```toml
 # pyproject.toml
 [project]
-name = "my-swarmresearch-plugin"
+name = "my-autoconstitution-plugin"
 version = "1.0.0"
-description = "Custom plugins for SwarmResearch"
+description = "Custom plugins for autoconstitution"
 
-[project.entry-points."swarmresearch.metrics"]
+[project.entry-points."autoconstitution.metrics"]
 my_metric = "my_plugin.metrics:MyCustomMetric"
 
-[project.entry-points."swarmresearch.providers"]
+[project.entry-points."autoconstitution.providers"]
 my_provider = "my_plugin.providers:MyCustomProvider"
 ```
 
@@ -2754,7 +2754,7 @@ This plugin architecture provides:
 4. **Configuration-Driven**: YAML/JSON configuration for all plugins
 5. **Extensibility**: Easy to add new plugin types and implementations
 
-The architecture makes SwarmResearch truly general-purpose, supporting:
+The architecture makes autoconstitution truly general-purpose, supporting:
 - Any ratchet metric (not just val_bpb)
 - Any LLM provider (not just Kimi)
 - Any training target (not just LM training)

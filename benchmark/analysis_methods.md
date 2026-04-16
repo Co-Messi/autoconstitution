@@ -1,8 +1,8 @@
-# Statistical Analysis Methods for SwarmResearch Benchmark Results
+# Statistical Analysis Methods for autoconstitution Benchmark Results
 
 ## Executive Summary
 
-This document provides comprehensive statistical analysis methods for evaluating SwarmResearch benchmark results against single-agent baselines. All methods are designed to be reproducible, statistically rigorous, and appropriate for the specific characteristics of multi-agent autoresearch systems.
+This document provides comprehensive statistical analysis methods for evaluating autoconstitution benchmark results against single-agent baselines. All methods are designed to be reproducible, statistically rigorous, and appropriate for the specific characteristics of multi-agent autoresearch systems.
 
 ---
 
@@ -22,7 +22,7 @@ This document provides comprehensive statistical analysis methods for evaluating
 
 ### 1.1 Overview of Testing Framework
 
-Significance testing determines whether observed differences between SwarmResearch and baseline systems are statistically meaningful or due to random variation.
+Significance testing determines whether observed differences between autoconstitution and baseline systems are statistically meaningful or due to random variation.
 
 ### 1.2 Paired vs Independent Tests
 
@@ -125,12 +125,12 @@ def assess_normality(data, alpha=0.05):
 
 **One-tailed test** (use with caution):
 - H₀: μ_swarm ≤ μ_baseline
-- H₁: μ_swarm > μ_baseline (if expecting SwarmResearch to be better)
+- H₁: μ_swarm > μ_baseline (if expecting autoconstitution to be better)
 - Use only when strong prior justifies directional hypothesis
 - Halves the p-value but increases false positive risk
 
 ```python
-# One-tailed paired t-test (SwarmResearch expected to be better)
+# One-tailed paired t-test (autoconstitution expected to be better)
 t_stat, p_value_two_tailed = stats.ttest_rel(swarm_results, baseline_results)
 p_value_one_tailed = p_value_two_tailed / 2
 
@@ -527,7 +527,7 @@ def variance_explained(group1, group2):
 
 ### 3.6 Probability of Superiority
 
-Probability that a random observation from SwarmResearch exceeds one from baseline.
+Probability that a random observation from autoconstitution exceeds one from baseline.
 
 ```python
 def probability_of_superiority(group1, group2):
@@ -729,7 +729,7 @@ def benjamini_yekutieli(p_values, alpha=0.05):
 | Benjamini-Hochberg | FDR | Many comparisons, exploratory | High |
 | Benjamini-Yekutieli | FDR | Dependent tests | Medium-High |
 
-### 4.7 Recommendation for SwarmResearch Benchmarks
+### 4.7 Recommendation for autoconstitution Benchmarks
 
 ```python
 def select_correction_method(n_comparisons, test_independence='independent'):
@@ -781,7 +781,7 @@ def plot_convergence_curves(swarm_data, baseline_data, metric_name='val_bpb'):
         process_convergence_data(baseline_data)
     
     # Plot
-    ax.plot(swarm_times, swarm_means, 'b-', label='SwarmResearch', linewidth=2)
+    ax.plot(swarm_times, swarm_means, 'b-', label='autoconstitution', linewidth=2)
     ax.fill_between(swarm_times, swarm_ci_lower, swarm_ci_upper, alpha=0.3, color='blue')
     
     ax.plot(baseline_times, baseline_means, 'r-', label='Single-Agent', linewidth=2)
@@ -828,7 +828,7 @@ def plot_comparison_boxplot(swarm_results, baseline_results, metric_name='Best v
     
     data = [swarm_results, baseline_results]
     positions = [1, 2]
-    labels = ['SwarmResearch', 'Single-Agent']
+    labels = ['autoconstitution', 'Single-Agent']
     colors = ['lightblue', 'lightcoral']
     
     # Box plot
@@ -871,7 +871,7 @@ def plot_violin_comparison(swarm_results, baseline_results, metric_name='Best va
     
     data = [swarm_results, baseline_results]
     positions = [1, 2]
-    labels = ['SwarmResearch', 'Single-Agent']
+    labels = ['autoconstitution', 'Single-Agent']
     
     # Violin plot
     parts = ax.violinplot(data, positions=positions, showmeans=True, 
@@ -1012,7 +1012,7 @@ def plot_ttt_comparison(swarm_ttt, baseline_ttt, targets=['90%', '95%', '99%']):
     baseline_errors = np.array(baseline_errors).T
     
     # Plot bars
-    bars1 = ax.bar(x - width/2, swarm_means, width, label='SwarmResearch',
+    bars1 = ax.bar(x - width/2, swarm_means, width, label='autoconstitution',
                    yerr=swarm_errors, capsize=5, color='lightblue', edgecolor='blue')
     bars2 = ax.bar(x + width/2, baseline_means, width, label='Single-Agent',
                    yerr=baseline_errors, capsize=5, color='lightcoral', edgecolor='red')
@@ -1107,7 +1107,7 @@ def analyze_benchmark_results(swarm_data, baseline_data, metric_names):
             'baseline_ci': percentile_bootstrap_ci(baseline_vals)
         }
         
-        print(f"SwarmResearch: {metric_results['descriptive']['swarm_mean']:.3f} ± "
+        print(f"autoconstitution: {metric_results['descriptive']['swarm_mean']:.3f} ± "
               f"{metric_results['descriptive']['swarm_std']:.3f} "
               f"[95% CI: {metric_results['descriptive']['swarm_ci'][0]:.3f}, "
               f"{metric_results['descriptive']['swarm_ci'][1]:.3f}]")
@@ -1197,7 +1197,7 @@ def analyze_benchmark_results(swarm_data, baseline_data, metric_names):
 """
 statistical_analysis.py
 
-Complete statistical analysis module for SwarmResearch benchmarks.
+Complete statistical analysis module for autoconstitution benchmarks.
 """
 
 import numpy as np
@@ -1535,7 +1535,7 @@ def format_result(result: Dict, metric_name: str = None) -> str:
     output += f"Results for: {name}\n"
     output += '='*60 + '\n'
     
-    output += f"SwarmResearch: {desc['swarm']['mean']:.4f} ± {desc['swarm']['std']:.4f}\n"
+    output += f"autoconstitution: {desc['swarm']['mean']:.4f} ± {desc['swarm']['std']:.4f}\n"
     output += f"  95% CI: [{desc['swarm']['ci'][0]:.4f}, {desc['swarm']['ci'][1]:.4f}]\n"
     
     output += f"Single-Agent:  {desc['baseline']['mean']:.4f} ± {desc['baseline']['std']:.4f}\n"
@@ -1617,4 +1617,4 @@ if __name__ == '__main__':
 ---
 
 *Document Version: 1.0*
-*For SwarmResearch Benchmark Statistical Analysis*
+*For autoconstitution Benchmark Statistical Analysis*

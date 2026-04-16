@@ -1,5 +1,5 @@
 """
-Reproducibility verification for SwarmResearch benchmark.
+Reproducibility verification for autoconstitution benchmark.
 
 This module provides tools to verify that benchmark results are
 reproducible by running the benchmark multiple times and comparing
@@ -31,7 +31,7 @@ def run_benchmark(seed: int, output_dir: Path, config_path: str = "./configs/m4_
         RuntimeError: If benchmark execution fails
     """
     result = subprocess.run([
-        "python", "-m", "swarmresearch.benchmark",
+        "python", "-m", "autoconstitution.benchmark",
         "--config", config_path,
         "--output", str(output_dir),
         "--seed", str(seed)
@@ -320,7 +320,7 @@ if __name__ == "__main__":
     import argparse
     
     parser = argparse.ArgumentParser(
-        description="Verify SwarmResearch benchmark reproducibility"
+        description="Verify autoconstitution benchmark reproducibility"
     )
     parser.add_argument(
         "--runs",

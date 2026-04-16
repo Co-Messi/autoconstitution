@@ -1,13 +1,13 @@
-# Constitutional AI Deep Dive: Mechanisms, Applications, and SwarmResearch Integration
+# Constitutional AI Deep Dive: Mechanisms, Applications, and autoconstitution Integration
 
 ## Executive Summary
 
-This report provides a comprehensive analysis of Anthropic's Constitutional AI (CAI) methodology and explores its application to SwarmResearch's multi-agent research system. Constitutional AI represents a paradigm shift in AI alignment, using AI systems to critique and improve other AI systems through explicit principles rather than implicit human preferences. The key innovation is the two-stage training process (Supervised Learning CAI and Reinforcement Learning from AI Feedback) that enables scalable self-improvement while maintaining transparency and interpretability.
+This report provides a comprehensive analysis of Anthropic's Constitutional AI (CAI) methodology and explores its application to autoconstitution's multi-agent research system. Constitutional AI represents a paradigm shift in AI alignment, using AI systems to critique and improve other AI systems through explicit principles rather than implicit human preferences. The key innovation is the two-stage training process (Supervised Learning CAI and Reinforcement Learning from AI Feedback) that enables scalable self-improvement while maintaining transparency and interpretability.
 
 **Key Findings:**
 - Constitutional AI reduces reliance on human labels by up to 90% while producing more helpful responses
 - The critique-revision mechanism creates explicit reasoning traces that improve both safety and capability
-- Multi-agent constitutional criticism shows promise for SwarmResearch's improvement validation pipeline
+- Multi-agent constitutional criticism shows promise for autoconstitution's improvement validation pipeline
 - Critical failure modes include principle conflicts, adversarial jailbreaks, and the "safety tax" on reasoning capability
 
 ---
@@ -310,17 +310,17 @@ The transformer architecture treats all tokens equally, making constitutional co
 
 ---
 
-## 5. Application to SwarmResearch
+## 5. Application to autoconstitution
 
-### 5.1 SwarmResearch Context
+### 5.1 autoconstitution Context
 
-SwarmResearch is a multi-agent system where:
+autoconstitution is a multi-agent system where:
 - Multiple AI agents collaborate on research tasks
 - Agents propose improvements to the system
 - Changes must be validated before adoption
 - Quality and constraint adherence must be maintained
 
-### 5.2 Constitutional Criticism for SwarmResearch
+### 5.2 Constitutional Criticism for autoconstitution
 
 **Core Concept:** Agents in the swarm can act as constitutional critics of each other's proposed improvements.
 
@@ -352,9 +352,9 @@ SwarmResearch is a multi-agent system where:
 └─────────────────────────────────────────────────────────────────────────┘
 ```
 
-### 5.3 SwarmResearch Constitution
+### 5.3 autoconstitution Constitution
 
-**Proposed Principles for SwarmResearch:**
+**Proposed Principles for autoconstitution:**
 
 | Category | Principle | Application |
 |----------|-----------|-------------|
@@ -673,7 +673,7 @@ class RollingBaseline:
 
 ## 9. Conclusion
 
-Constitutional AI provides a powerful framework for SwarmResearch's improvement validation pipeline. The key insights are:
+Constitutional AI provides a powerful framework for autoconstitution's improvement validation pipeline. The key insights are:
 
 1. **AI-driven criticism scales** - Using AI critics reduces reliance on human validation while maintaining quality
 2. **Explicit principles enable transparency** - Constitutional principles make rejection decisions auditable
@@ -699,4 +699,4 @@ Constitutional AI provides a powerful framework for SwarmResearch's improvement 
 ---
 
 *Report generated: 2025*
-*Research focus: Constitutional AI mechanisms and SwarmResearch integration*
+*Research focus: Constitutional AI mechanisms and autoconstitution integration*

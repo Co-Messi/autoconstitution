@@ -1,8 +1,8 @@
-# SwarmResearch API Economics Report
+# autoconstitution API Economics Report
 ## Cost Analysis & Budget-Aware Orchestration for Multi-Agent Systems
 
 **Report Date:** 2025  
-**Scope:** Cost structure analysis for running 100-agent swarm research experiments across major AI API providers
+**Scope:** Cost structure analysis for running 100-agent autoconstitution runs across major AI API providers
 
 ---
 
@@ -67,7 +67,7 @@ This report analyzes the cost structure of running multi-agent (swarm) research 
 
 ### 2.1 Workload Assumptions
 
-For a typical swarm research experiment:
+For a typical autoconstitution experiment:
 
 | Parameter | Value |
 |-----------|-------|
@@ -339,7 +339,7 @@ Value/Dollar = (Research Quality x Insights Generated)
 
 ## 8. Conclusion
 
-Running 100-agent swarm research overnight is feasible across all major providers, but costs vary dramatically:
+Running 100-agent autoconstitution overnight is feasible across all major providers, but costs vary dramatically:
 
 - **Minimum cost:** $99.84 (GPT-4.1 Mini Batch)
 - **Best swarm experience:** $307.20 (Kimi K2.5 with native parallel support)
@@ -347,7 +347,7 @@ Running 100-agent swarm research overnight is feasible across all major provider
 
 **Key Takeaway:** For most researchers, the optimal approach is a **hybrid orchestration** using GPT-4.1 Mini/GPT-5 Mini for 80% of tasks and Kimi K2.5 for orchestration and complex reasoning. This delivers the best value per dollar while maintaining research quality.
 
-Students and indie researchers can get started with as little as **$20-50**, while serious swarm research requires a budget of **$300-500** for full overnight experiments.
+Students and indie researchers can get started with as little as **$20-50**, while serious autoconstitution requires a budget of **$300-500** for full overnight experiments.
 
 ---
 
@@ -389,4 +389,4 @@ Students and indie researchers can get started with as little as **$20-50**, whi
 
 ---
 
-*Report generated for SwarmResearch cost optimization analysis.*
+*Report generated for autoconstitution cost optimization analysis.*

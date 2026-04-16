@@ -1,4 +1,4 @@
-# SwarmResearch: Cross-Platform Scaling Architecture
+# autoconstitution: Cross-Platform Scaling Architecture
 ## From Apple Silicon M4 to H100 Clusters
 
 **Research Report**  
@@ -8,7 +8,7 @@
 
 ## Executive Summary
 
-This report analyzes the architectural requirements for designing SwarmResearch to run on Apple Silicon M4 (16-64GB unified memory) as the minimum viable target while scaling seamlessly to 8x H100 clusters for power users. The two hardware tiers represent fundamentally different computing paradigms that require careful abstraction design.
+This report analyzes the architectural requirements for designing autoconstitution to run on Apple Silicon M4 (16-64GB unified memory) as the minimum viable target while scaling seamlessly to 8x H100 clusters for power users. The two hardware tiers represent fundamentally different computing paradigms that require careful abstraction design.
 
 **Key Finding**: A 1000x performance gap exists between M4 Max (~54 TFLOPS FP16) and 8x H100 (~16,000 TFLOPS FP8), necessitating hardware-aware design patterns with unified abstraction layers.
 
@@ -182,7 +182,7 @@ Karpathy's autoresearch-mlx port revealed:
 
 > "Hyperparameter recipes don't port cleanly across hardware. On Apple Silicon, smaller and faster-training models outperform the larger configurations that win on CUDA clusters within the same time budget."
 
-**Implication for SwarmResearch:**
+**Implication for autoconstitution:**
 - Need hardware-specific default configurations
 - Abstraction layer must handle optimization selection
 - Same algorithmic approach, different tuning parameters
@@ -308,7 +308,7 @@ compute:
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                    SwarmResearch Application                 │
+│                    autoconstitution Application                 │
 ├─────────────────────────────────────────────────────────────┤
 │  Research Orchestrator  │  Experiment Manager  │  Metrics   │
 ├─────────────────────────────────────────────────────────────┤
@@ -558,7 +558,7 @@ class CheckpointManager:
 ### 7.2 Code Organization
 
 ```
-swarmresearch/
+autoconstitution/
 ├── core/
 │   ├── __init__.py
 │   ├── tensor.py          # Unified tensor abstraction
@@ -702,5 +702,5 @@ distributed:
 
 ---
 
-*Report generated for SwarmResearch architecture planning*
+*Report generated for autoconstitution architecture planning*
 *Last updated: 2025*

@@ -1,9 +1,9 @@
-# SwarmResearch Benchmark Reporting Format
+# autoconstitution Benchmark Reporting Format
 
 ## Document Information
 - **Version**: 1.0
 - **Last Updated**: 2024
-- **Purpose**: Standardized reporting format for SwarmResearch benchmark results
+- **Purpose**: Standardized reporting format for autoconstitution benchmark results
 
 ---
 
@@ -24,7 +24,7 @@
                     SWARMRESEARCH BENCHMARK EXECUTIVE SUMMARY
 ================================================================================
 Report ID:        [SRB-YYYY-MM-DD-XXX]
-Benchmark Suite:  [SwarmResearch Benchmark vX.X]
+Benchmark Suite:  [autoconstitution Benchmark vX.X]
 Test Date:        [YYYY-MM-DD HH:MM:SS UTC]
 Duration:         [HH:MM:SS]
 Environment:      [Hardware/Cloud Spec]
@@ -741,4 +741,4 @@ Post-Generation:
 
 ---
 
-*End of SwarmResearch Benchmark Reporting Format*
+*End of autoconstitution Benchmark Reporting Format*

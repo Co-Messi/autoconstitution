@@ -1,5 +1,5 @@
 # autoconstitution Configuration File
-# This is a sample configuration file for swarm research experiments
+# This is a sample configuration file for autoconstitution runs
 
 # Experiment metadata
 name: "sample_experiment"

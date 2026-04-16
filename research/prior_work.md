@@ -156,7 +156,7 @@ Per OSSInsight data (March 2026):
   - Subagent mode: resilient, high-throughput, optimal for shallow optimizations
   - Agent team: higher fragility but deeper theoretical alignment for complex refactoring
 - **Recommendation:** Dynamically routed architectures adapting to task complexity
-- **Relation to autoresearch:** Provides empirical guidance for SwarmResearch design
+- **Relation to autoresearch:** Provides empirical guidance for autoconstitution design
 
 ---
 
@@ -244,7 +244,7 @@ Long-term Memory (Expert Skills)     Short-term Memory (Trajectory)
 
 | Gap | Description | Impact | Opportunity |
 |-----|-------------|--------|-------------|
-| **G1: No Parallel Autoresearch** | No implementation combines autoresearch's code-editing loop with parallel agent exploration | Limits throughput to single-thread | SwarmResearch can fill |
+| **G1: No Parallel Autoresearch** | No implementation combines autoresearch's code-editing loop with parallel agent exploration | Limits throughput to single-thread | autoconstitution can fill |
 | **G2: Limited Cross-Agent Code Sharing** | AgentRxiv shares papers; no system shares actual code improvements | Redundant experimentation | Code diff + git-based sharing |
 | **G3: No Dynamic Task Allocation** | Agents don't self-organize based on expertise or load | Suboptimal resource use | Work-stealing + specialization |
 | **G4: No Conflict Resolution** | When agents modify same code, no merge strategy exists | Code divergence | Git-like merge for agent edits |
@@ -292,7 +292,7 @@ Long-term Memory (Expert Skills)     Short-term Memory (Trajectory)
 
 | Feature | Status | Why It Matters |
 |---------|--------|----------------|
-| Parallel autoresearch agents editing same codebase | ❌ Not implemented | Core SwarmResearch premise |
+| Parallel autoresearch agents editing same codebase | ❌ Not implemented | Core autoconstitution premise |
 | Cross-agent code diff sharing | ❌ Not implemented | Prevents redundant work |
 | Real-time agent coordination during experiments | ❌ Not implemented | Enables dynamic load balancing |
 | Global best-codebase synchronization | ❌ Not implemented | Ensures convergence |
@@ -307,11 +307,11 @@ Long-term Memory (Expert Skills)     Short-term Memory (Trajectory)
 
 ---
 
-## 6. Recommendations for SwarmResearch
+## 6. Recommendations for autoconstitution
 
 ### 6.1 Core Differentiators
 
-Based on gap analysis, SwarmResearch should implement:
+Based on gap analysis, autoconstitution should implement:
 
 | Feature | Implementation Approach | Competitive Advantage |
 |---------|------------------------|----------------------|
@@ -328,7 +328,7 @@ Based on empirical study (arXiv:2603.29632):
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                    SwarmResearch Architecture                │
+│                    autoconstitution Architecture                │
 ├─────────────────────────────────────────────────────────────┤
 │  Layer 3: Global Orchestrator (Meta-Agent)                  │
 │           • Task complexity assessment                      │
@@ -392,7 +392,7 @@ Based on empirical study (arXiv:2603.29632):
 | **AI Co-Scientist** | N | ✅ | ❌ | ✅ (shared mem) | ❌ |
 | **Kosmos** | 200 | ✅ | ❌ | ✅ (world model) | Partial |
 | **OpenEvolve** | N | ✅ (islands) | ❌ | ✅ (migration) | ✅ |
-| **SwarmResearch** | N | ✅ | ✅ | ✅ | TBD |
+| **autoconstitution** | N | ✅ | ✅ | ✅ | TBD |
 
 ---
 
@@ -430,11 +430,11 @@ The autoresearch ecosystem has rapidly expanded since March 2026, with significa
 - Multi-agent research systems (15+ implementations)
 - Knowledge sharing mechanisms (7 approaches)
 
-**However, a critical gap remains:** No system combines the autoresearch code-editing paradigm with massively parallel multi-agent collaboration and cross-agent code sharing. This is precisely the opportunity SwarmResearch addresses.
+**However, a critical gap remains:** No system combines the autoresearch code-editing paradigm with massively parallel multi-agent collaboration and cross-agent code sharing. This is precisely the opportunity autoconstitution addresses.
 
 Karpathy's vision of "SETI@home style" distributed research agents remains unrealized. The components exist—AgentRxiv's sharing, KernelSkill's multi-agent coordination, OpenEvolve's parallel evolution—but no one has integrated them into a unified autoresearch-style system.
 
-**SwarmResearch has the opportunity to be the first.**
+**autoconstitution has the opportunity to be the first.**
 
 ---
 

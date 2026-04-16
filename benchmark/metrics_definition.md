@@ -1,8 +1,8 @@
-# SwarmResearch Performance Metrics Definition
+# autoconstitution Performance Metrics Definition
 
 ## Overview
 
-This document defines the complete set of metrics for measuring SwarmResearch system performance across multiple dimensions: improvement capability, exploration efficiency, solution quality, and cost-effectiveness.
+This document defines the complete set of metrics for measuring autoconstitution system performance across multiple dimensions: improvement capability, exploration efficiency, solution quality, and cost-effectiveness.
 
 ---
 
@@ -528,7 +528,7 @@ Always compare against:
 ### 6.2 Summary Scorecard
 
 ```
-SwarmResearch Performance Scorecard
+autoconstitution Performance Scorecard
 ===================================
 Primary Metrics:
   - Improvement Rate:        [____] / 10

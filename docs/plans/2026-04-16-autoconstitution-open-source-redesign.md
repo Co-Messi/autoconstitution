@@ -4,7 +4,7 @@
 
 **Goal:** Reposition `autoconstitution` as a multi-agent autoresearch system and align the docs, API surface, and CLI with that product story.
 
-**Architecture:** Keep `autoconstitution` as the public product and selectively preserve engine pieces from the current codebase. The public story should center on the role-based improvement loop, while orchestration and scaling internals move below the fold.
+**Architecture:** Keep `autoconstitution` as the public product and selectively preserve engine pieces from the precursor codebase. The public story should center on the role-based improvement loop, while orchestration and scaling internals move below the fold.
 
 **Tech Stack:** Python, Typer, Rich, Pydantic, provider adapters, Markdown docs, pytest
 
@@ -95,4 +95,3 @@ Choose a memorable domain example that makes the product feel real.
 **Step 3: Commit the product polish**
 
 Commit once the next visible slice of the product is in place.
-

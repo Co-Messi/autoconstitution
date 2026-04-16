@@ -1,8 +1,8 @@
-# SwarmResearch v0.2/v0.3: Distributed Systems Architecture
+# autoconstitution v0.2/v0.3: Distributed Systems Architecture
 
 ## Executive Summary
 
-SwarmResearch enables SETI@home-style public compute sharing for distributed ML training. This architecture leverages **DiLoCo (Distributed Low-Communication Training)** to achieve 500x communication reduction while maintaining synchronous training performance. The system is designed to tolerate heterogeneous nodes, intermittent connectivity, and Byzantine participants.
+autoconstitution enables SETI@home-style public compute sharing for distributed ML training. This architecture leverages **DiLoCo (Distributed Low-Communication Training)** to achieve 500x communication reduction while maintaining synchronous training performance. The system is designed to tolerate heterogeneous nodes, intermittent connectivity, and Byzantine participants.
 
 ---
 
@@ -56,9 +56,9 @@ class BootstrapProtocol:
     """
     
     BOOTSTRAP_NODES = [
-        "bootstrap.swarmresearch.org:6881",
-        "bootstrap-backup.swarmresearch.org:6881",
-        "bootstrap-eu.swarmresearch.org:6881"
+        "bootstrap.autoconstitution.org:6881",
+        "bootstrap-backup.autoconstitution.org:6881",
+        "bootstrap-eu.autoconstitution.org:6881"
     ]
     
     def __init__(self, node_id: bytes, listen_port: int):
@@ -174,7 +174,7 @@ class SwarmQUICProtocol:
     async def create_connection(self, node: Node) -> QuicConnection:
         """Create encrypted QUIC connection with certificate pinning."""
         configuration = QuicConfiguration(
-            alpn_protocols=["swarm-research/0.3"],
+            alpn_protocols=["autoconstitution/0.3"],
             is_client=True,
             max_datagram_frame_size=65536
         )
@@ -223,11 +223,11 @@ class NATTraversal:
     STUN_SERVERS = [
         "stun.l.google.com:19302",
         "stun1.l.google.com:19302",
-        "stun.swarmresearch.org:3478"
+        "stun.autoconstitution.org:3478"
     ]
     
     TURN_SERVERS = [
-        "turn.swarmresearch.org:3478"  # For symmetric NAT fallback
+        "turn.autoconstitution.org:3478"  # For symmetric NAT fallback
     ]
     
     async def establish_direct_connection(self, peer: Node) -> Connection:
@@ -1260,14 +1260,14 @@ class ReputationSystem:
 ### 6.2 Configuration Summary
 
 ```yaml
-# SwarmResearch v0.3 Configuration
+# autoconstitution v0.3 Configuration
 
 network:
   discovery:
     protocol: "kademlia-dht"
     bootstrap_nodes:
-      - "bootstrap.swarmresearch.org:6881"
-      - "bootstrap-eu.swarmresearch.org:6881"
+      - "bootstrap.autoconstitution.org:6881"
+      - "bootstrap-eu.autoconstitution.org:6881"
     k_bucket_size: 20
     alpha_parallelism: 3
   

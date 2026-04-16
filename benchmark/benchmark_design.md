@@ -1,8 +1,8 @@
-# SwarmResearch Canonical Benchmark Design
+# autoconstitution Canonical Benchmark Design
 
 ## Overview
 
-The SwarmResearch benchmark evaluates multi-agent coordination and distributed research capabilities of AI systems. This benchmark measures how effectively multiple agents can collaborate to solve complex research tasks, including literature synthesis, hypothesis generation, experimental design, and consensus building.
+The autoconstitution benchmark evaluates multi-agent coordination and distributed research capabilities of AI systems. This benchmark measures how effectively multiple agents can collaborate to solve complex research tasks, including literature synthesis, hypothesis generation, experimental design, and consensus building.
 
 **Version:** 1.0.0  
 **Last Updated:** 2024  
@@ -91,16 +91,16 @@ orchestration:
 
 ## 2. Dataset Specification
 
-### 2.1 Primary Dataset: SwarmResearch-Bench-v1
+### 2.1 Primary Dataset: autoconstitution-Bench-v1
 
-**Location:** `/datasets/swarmresearch_bench_v1/`  
+**Location:** `/datasets/autoconstitution_bench_v1/`  
 **Size:** 250 MB  
 **Format:** JSON + Markdown
 
 #### Dataset Structure:
 
 ```
-swarmresearch_bench_v1/
+autoconstitution_bench_v1/
 ├── literature_synthesis/
 │   ├── papers/                    # 50 synthetic research papers
 │   │   ├── paper_001.md
@@ -143,15 +143,15 @@ swarmresearch_bench_v1/
 
 ```bash
 # Download command
-curl -L https://benchmarks.swarmresearch.org/datasets/v1/swarmresearch_bench_v1.tar.gz \
-  -o swarmresearch_bench_v1.tar.gz
+curl -L https://benchmarks.autoconstitution.org/datasets/v1/autoconstitution_bench_v1.tar.gz \
+  -o autoconstitution_bench_v1.tar.gz
 
 # Verify checksum
-sha256sum swarmresearch_bench_v1.tar.gz
+sha256sum autoconstitution_bench_v1.tar.gz
 # Expected: a3f7c9e2d8b1... (64 chars)
 
 # Extract
-tar -xzf swarmresearch_bench_v1.tar.gz
+tar -xzf autoconstitution_bench_v1.tar.gz
 ```
 
 ### 2.3 Synthetic Paper Generation (Optional)
@@ -212,11 +212,11 @@ model_spec:
 ### 3.2 Default Model for M4 Baseline
 
 **Primary Model:** `swarm-agent-small-3B-int8`  
-**Download URL:** `https://models.swarmresearch.org/v1/swarm-agent-small-3B-int8.gguf`
+**Download URL:** `https://models.autoconstitution.org/v1/swarm-agent-small-3B-int8.gguf`
 
 ```bash
 # Download model
-curl -L https://models.swarmresearch.org/v1/swarm-agent-small-3B-int8.gguf \
+curl -L https://models.autoconstitution.org/v1/swarm-agent-small-3B-int8.gguf \
   -o models/swarm-agent-small-3B-int8.gguf
 
 # Verify
@@ -276,14 +276,14 @@ system_profiler SPHardwareDataType | grep Memory
 
 ```bash
 # Python environment
-python3 -m venv swarmresearch_env
-source swarmresearch_env/bin/activate
+python3 -m venv autoconstitution_env
+source autoconstitution_env/bin/activate
 
 # Install dependencies
-pip install swarmresearch-benchmark==1.0.0
+pip install autoconstitution-benchmark==1.0.0
 
 # Verify installation
-python -m swarmresearch.verify --hardware-check
+python -m autoconstitution.verify --hardware-check
 ```
 
 ### 4.4 Performance Baseline
@@ -407,7 +407,7 @@ dependencies:
     pydantic: "2.7.0"
     
   benchmark_package:
-    swarmresearch-benchmark: "1.0.0"
+    autoconstitution-benchmark: "1.0.0"
 ```
 
 #### Docker Environment (Recommended)
@@ -415,12 +415,12 @@ dependencies:
 ```dockerfile
 FROM python:3.11-slim
 
-RUN pip install swarmresearch-benchmark==1.0.0
+RUN pip install autoconstitution-benchmark==1.0.0
 
 COPY --from=models /swarm-agent-small-3B-int8.gguf /models/
-COPY --from=datasets /swarmresearch_bench_v1 /datasets/
+COPY --from=datasets /autoconstitution_bench_v1 /datasets/
 
-ENTRYPOINT ["python", "-m", "swarmresearch.benchmark"]
+ENTRYPOINT ["python", "-m", "autoconstitution.benchmark"]
 ```
 
 ### 6.2 Random Seed Management
@@ -446,19 +446,19 @@ np.random.seed(SEEDS["dataset_shuffle"])
 
 ```bash
 # Step 1: Verify environment
-python -m swarmresearch.verify --full
+python -m autoconstitution.verify --full
 
 # Step 2: Download assets
-python -m swarmresearch.download --dataset --model
+python -m autoconstitution.download --dataset --model
 
 # Step 3: Run full benchmark
-python -m swarmresearch.benchmark \
+python -m autoconstitution.benchmark \
   --config configs/m4_baseline.yaml \
   --output results/run_$(date +%Y%m%d_%H%M%S).json \
   --seed 42
 
 # Step 4: Generate report
-python -m swarmresearch.report \
+python -m autoconstitution.report \
   --results results/run_*.json \
   --output report.html
 ```
@@ -548,7 +548,7 @@ Before submitting results:
 
 ```bash
 # Submit to leaderboard
-python -m swarmresearch.submit \
+python -m autoconstitution.submit \
   --results results/run_*.json \
   --email researcher@institution.edu \
   --affiliation "University Name"
@@ -562,7 +562,7 @@ python -m swarmresearch.submit \
 
 ```bash
 # Clone benchmark repository
-git clone https://github.com/swarmresearch/benchmark.git
+git clone https://github.com/autoconstitution/benchmark.git
 cd benchmark
 
 # Run setup script
@@ -592,7 +592,7 @@ On M4 16GB:
 
 ## 8. References
 
-1. SwarmResearch Benchmark Specification v1.0
+1. autoconstitution Benchmark Specification v1.0
 2. M4 Performance Guidelines for AI Workloads
 3. Multi-Agent Coordination Evaluation Framework
 4. Reproducible AI Benchmarking Standards (RAIBS-2024)
@@ -613,7 +613,7 @@ hardware:
   threads: 8
 
 dataset:
-  path: "./datasets/swarmresearch_bench_v1"
+  path: "./datasets/autoconstitution_bench_v1"
   verify_checksums: true
 
 model:
@@ -665,7 +665,7 @@ To validate your benchmark installation:
 
 ```bash
 # Run validation suite
-python -m swarmresearch.validate --suite full
+python -m autoconstitution.validate --suite full
 
 # Expected output:
 # ✓ Environment check passed
@@ -678,4 +678,4 @@ python -m swarmresearch.validate --suite full
 
 ---
 
-*End of SwarmResearch Canonical Benchmark Design Document*
+*End of autoconstitution Canonical Benchmark Design Document*

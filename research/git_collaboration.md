@@ -49,7 +49,7 @@ Git Performance Issues with 100+ Branches:
 
 ### 1.4 The "Never Merge" Problem
 
-Karpathy's key insight: in swarm research, you want to "adopt and accumulate branches of commits" rather than merge them. This contradicts Git's fundamental workflow:
+Karpathy's key insight: in autoconstitution, you want to "adopt and accumulate branches of commits" rather than merge them. This contradicts Git's fundamental workflow:
 
 - **Git expects**: Branch → Work → Merge → Delete Branch
 - **Swarm needs**: Branch → Explore → Accumulate → Never Delete
@@ -80,7 +80,7 @@ In Pijul, independent changes can be applied in **any order without changing the
 Change A + Change B = Change B + Change A (when independent)
 ```
 
-This is crucial for swarm research where agents work independently.
+This is crucial for autoconstitution where agents work independently.
 
 #### First-Class Conflicts
 
@@ -151,7 +151,7 @@ Fossil:
 
 ### 3.1 Multi-Agent Coordination Patterns
 
-Research on multi-agent systems reveals patterns applicable to swarm research:
+Research on multi-agent systems reveals patterns applicable to autoconstitution:
 
 #### Pattern 1: Hierarchical Orchestration
 
@@ -469,13 +469,13 @@ def resolve_conflict(branch_a, branch_b):
 
 ---
 
-## 7. Recommended Collaboration Protocol: SwarmResearch
+## 7. Recommended Collaboration Protocol: autoconstitution
 
 ### 7.1 Architecture Overview
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                    SwarmResearch Protocol                        │
+│                    autoconstitution Protocol                        │
 ├─────────────────────────────────────────────────────────────────┤
 │                                                                  │
 │  ┌─────────────┐    ┌─────────────┐    ┌─────────────┐         │
@@ -594,7 +594,7 @@ Create ──► Explore ──► Validate ──► Integrate ──► Archiv
 # Setup script for 100-agent swarm
 #!/bin/bash
 
-REPO_URL="https://github.com/org/swarm-research.git"
+REPO_URL="https://github.com/org/autoconstitution.git"
 BASE_DIR="/var/swarm"
 NUM_AGENTS=100
 
@@ -614,8 +614,8 @@ done
 #### Option B: Pijul (Recommended for Long-Term)
 
 ```bash
-# Pijul setup for swarm research
-pijul init swarm-research
+# Pijul setup for autoconstitution
+pijul init autoconstitution
 
 # Agents create patches independently
 # No branch management needed - patches commute
@@ -698,4 +698,4 @@ Conflict recording and resolution
 
 ---
 
-*Report generated for SwarmResearch collaboration protocol design.*
+*Report generated for autoconstitution collaboration protocol design.*

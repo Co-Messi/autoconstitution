@@ -2,7 +2,7 @@
 ## Parallel Search with Information Sharing: Biological and Computational Mechanisms
 
 **Research Date:** 2025  
-**Purpose:** Extract core mechanisms for SwarmResearch's cross-pollination layer from biological evolution, genetic algorithms, ant colony optimization, and particle swarm optimization.
+**Purpose:** Extract core mechanisms for autoconstitution's cross-pollination layer from biological evolution, genetic algorithms, ant colony optimization, and particle swarm optimization.
 
 ---
 
@@ -50,7 +50,7 @@ Population genetics research reveals critical thresholds:
 - **Nm ≥ 10**: Required for panmixia (equal allele frequencies)
 - **Nm = 0.1** (one migrant per 10 generations): Sufficient to spread advantageous alleles
 
-**Implication for SwarmResearch:** Even infrequent information sharing is sufficient to spread good solutions across parallel search threads.
+**Implication for autoconstitution:** Even infrequent information sharing is sufficient to spread good solutions across parallel search threads.
 
 ### 1.4 Preventing Premature Convergence
 
@@ -341,7 +341,7 @@ All four domains share these fundamental mechanisms:
 
 ---
 
-## 6. Implementation Recommendations for SwarmResearch
+## 6. Implementation Recommendations for autoconstitution
 
 ### 6.1 Cross-Pollination Layer Architecture
 
@@ -487,4 +487,4 @@ def get_pollination_frequency(iteration, max_iter, diversity):
 
 ---
 
-*Report generated for SwarmResearch cross-pollination layer design*
+*Report generated for autoconstitution cross-pollination layer design*

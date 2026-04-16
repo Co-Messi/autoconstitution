@@ -1,4 +1,4 @@
-# SwarmResearch Deployment Architecture
+# autoconstitution Deployment Architecture
 
 ## Comprehensive Deployment Strategy for Open Source ML Projects
 
@@ -6,7 +6,7 @@
 
 ## Executive Summary
 
-This document outlines the complete deployment architecture for SwarmResearch, a massively parallel collaborative AI research system. The deployment strategy follows cloud-native best practices, enabling seamless scaling from development (Mac Mini M4) to production GPU clusters while maintaining simplicity for open source contributors.
+This document outlines the complete deployment architecture for autoconstitution, a massively parallel collaborative AI research system. The deployment strategy follows cloud-native best practices, enabling seamless scaling from development (Mac Mini M4) to production GPU clusters while maintaining simplicity for open source contributors.
 
 ---
 
@@ -62,8 +62,8 @@ This document outlines the complete deployment architecture for SwarmResearch, a
 # syntax=docker/dockerfile:1.6
 FROM python:3.11-slim-bookworm AS swarm-base
 
-LABEL org.opencontainers.image.source="https://github.com/swarmresearch/swarm-research"
-LABEL org.opencontainers.image.description="SwarmResearch Base Image"
+LABEL org.opencontainers.image.source="https://github.com/autoconstitution/autoconstitution"
+LABEL org.opencontainers.image.description="autoconstitution Base Image"
 LABEL org.opencontainers.image.licenses="MIT"
 
 # Security: Run as non-root
@@ -105,10 +105,10 @@ ENV PYTHONDONTWRITEBYTECODE=1
 
 ```dockerfile
 # syntax=docker/dockerfile:1.6
-FROM swarmresearch/swarm-base:latest AS swarm-api
+FROM autoconstitution/swarm-base:latest AS swarm-api
 
-LABEL org.opencontainers.image.source="https://github.com/swarmresearch/swarm-research"
-LABEL org.opencontainers.image.description="SwarmResearch API Server"
+LABEL org.opencontainers.image.source="https://github.com/autoconstitution/autoconstitution"
+LABEL org.opencontainers.image.description="autoconstitution API Server"
 
 USER root
 
@@ -136,10 +136,10 @@ CMD ["swarm_research.api:app", "--host", "0.0.0.0", "--port", "8000", "--workers
 
 ```dockerfile
 # syntax=docker/dockerfile:1.6
-FROM swarmresearch/swarm-base:latest AS swarm-worker
+FROM autoconstitution/swarm-base:latest AS swarm-worker
 
-LABEL org.opencontainers.image.source="https://github.com/swarmresearch/swarm-research"
-LABEL org.opencontainers.image.description="SwarmResearch Worker"
+LABEL org.opencontainers.image.source="https://github.com/autoconstitution/autoconstitution"
+LABEL org.opencontainers.image.description="autoconstitution Worker"
 
 USER root
 
@@ -166,8 +166,8 @@ CMD ["--concurrency", "10"]
 # syntax=docker/dockerfile:1.6
 FROM ollama/ollama:latest AS swarm-ollama
 
-LABEL org.opencontainers.image.source="https://github.com/swarmresearch/swarm-research"
-LABEL org.opencontainers.image.description="SwarmResearch with Ollama"
+LABEL org.opencontainers.image.source="https://github.com/autoconstitution/autoconstitution"
+LABEL org.opencontainers.image.description="autoconstitution with Ollama"
 
 # Pre-pull common models for faster startup
 RUN ollama serve & \
@@ -190,10 +190,10 @@ CMD ["serve"]
 
 ```dockerfile
 # syntax=docker/dockerfile:1.6
-FROM swarmresearch/swarm-base:latest AS swarm-dev
+FROM autoconstitution/swarm-base:latest AS swarm-dev
 
-LABEL org.opencontainers.image.source="https://github.com/swarmresearch/swarm-research"
-LABEL org.opencontainers.image.description="SwarmResearch Development Environment"
+LABEL org.opencontainers.image.source="https://github.com/autoconstitution/autoconstitution"
+LABEL org.opencontainers.image.description="autoconstitution Development Environment"
 
 USER root
 
@@ -330,7 +330,7 @@ version: "3.8"
 
 services:
   api:
-    image: swarmresearch/swarm-api:${SWARM_VERSION:-latest}
+    image: autoconstitution/swarm-api:${SWARM_VERSION:-latest}
     ports:
       - "8000:8000"
     environment:
@@ -365,7 +365,7 @@ services:
       - swarm-net
 
   worker:
-    image: swarmresearch/swarm-worker:${SWARM_VERSION:-latest}
+    image: autoconstitution/swarm-worker:${SWARM_VERSION:-latest}
     environment:
       - SWARM_ENV=production
       - REDIS_URL=redis://redis:6379
@@ -437,9 +437,9 @@ networks:
 set -e
 
 VERSION=${1:-$(git describe --tags --always)}
-REGISTRY=${REGISTRY:-swarmresearch}
+REGISTRY=${REGISTRY:-autoconstitution}
 
-echo "Building SwarmResearch images version: $VERSION"
+echo "Building autoconstitution images version: $VERSION"
 
 # Build base image
 docker build \
@@ -709,7 +709,7 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           images: |
-            swarmresearch/swarm-api
+            autoconstitution/swarm-api
             ghcr.io/${{ github.repository }}/swarm-api
           tags: |
             type=ref,event=branch
@@ -732,7 +732,7 @@ jobs:
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@master
         with:
-          image-ref: swarmresearch/swarm-api:${{ github.sha }}
+          image-ref: autoconstitution/swarm-api:${{ github.sha }}
           format: 'sarif'
           output: 'trivy-results.sarif'
       
@@ -750,7 +750,7 @@ jobs:
     if: github.ref == 'refs/heads/develop'
     environment:
       name: staging
-      url: https://staging.swarmresearch.io
+      url: https://staging.autoconstitution.io
     steps:
       - uses: actions/checkout@v4
       
@@ -761,7 +761,7 @@ jobs:
       
       - name: Run smoke tests
         run: |
-          curl -f https://staging.swarmresearch.io/health || exit 1
+          curl -f https://staging.autoconstitution.io/health || exit 1
 
   # ============ Stage 6: Deploy to Production ============
   deploy-production:
@@ -771,7 +771,7 @@ jobs:
     if: startsWith(github.ref, 'refs/tags/v')
     environment:
       name: production
-      url: https://api.swarmresearch.io
+      url: https://api.autoconstitution.io
     steps:
       - uses: actions/checkout@v4
       
@@ -782,7 +782,7 @@ jobs:
       
       - name: Verify deployment
         run: |
-          curl -f https://api.swarmresearch.io/health || exit 1
+          curl -f https://api.autoconstitution.io/health || exit 1
 ```
 
 #### Release Workflow (`.github/workflows/release.yml`)
@@ -825,12 +825,12 @@ jobs:
             ${{ steps.changelog.outputs.changelog }}
             
             ## Docker Images
-            - `swarmresearch/swarm-api:${{ github.ref_name }}`
-            - `swarmresearch/swarm-worker:${{ github.ref_name }}`
+            - `autoconstitution/swarm-api:${{ github.ref_name }}`
+            - `autoconstitution/swarm-worker:${{ github.ref_name }}`
             
             ## PyPI Package
             ```bash
-            pip install swarm-research==${{ github.ref_name }}
+            pip install autoconstitution==${{ github.ref_name }}
             ```
           draft: false
           prerelease: ${{ contains(github.ref_name, 'rc') || contains(github.ref_name, 'beta') || contains(github.ref_name, 'alpha') }}
@@ -869,9 +869,9 @@ jobs:
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: swarm-research
+  name: autoconstitution
   labels:
-    app.kubernetes.io/name: swarm-research
+    app.kubernetes.io/name: autoconstitution
     app.kubernetes.io/managed-by: kubectl
 
 ---
@@ -880,7 +880,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: swarm-config
-  namespace: swarm-research
+  namespace: autoconstitution
 data:
   SWARM_ENV: "production"
   SWARM_LOG_LEVEL: "info"
@@ -892,7 +892,7 @@ apiVersion: v1
 kind: Secret
 metadata:
   name: swarm-secrets
-  namespace: swarm-research
+  namespace: autoconstitution
 type: Opaque
 stringData:
   DATABASE_URL: "postgresql://..."
@@ -907,7 +907,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: swarm-api
-  namespace: swarm-research
+  namespace: autoconstitution
   labels:
     app: swarm-api
 spec:
@@ -929,7 +929,7 @@ spec:
         fsGroup: 999
       containers:
         - name: api
-          image: swarmresearch/swarm-api:latest
+          image: autoconstitution/swarm-api:latest
           ports:
             - containerPort: 8000
               name: http
@@ -972,7 +972,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: swarm-api
-  namespace: swarm-research
+  namespace: autoconstitution
 spec:
   selector:
     app: swarm-api
@@ -991,7 +991,7 @@ apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
   name: swarm-api-hpa
-  namespace: swarm-research
+  namespace: autoconstitution
 spec:
   scaleTargetRef:
     apiVersion: apps/v1
@@ -1039,7 +1039,7 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: swarm-ingress
-  namespace: swarm-research
+  namespace: autoconstitution
   annotations:
     kubernetes.io/ingress.class: nginx
     cert-manager.io/cluster-issuer: "letsencrypt-prod"
@@ -1047,10 +1047,10 @@ metadata:
 spec:
   tls:
     - hosts:
-        - api.swarmresearch.io
+        - api.autoconstitution.io
       secretName: swarm-tls
   rules:
-    - host: api.swarmresearch.io
+    - host: api.autoconstitution.io
       http:
         paths:
           - path: /
@@ -1065,10 +1065,10 @@ spec:
 ### 2.4 Helm Chart
 
 ```yaml
-# helm/swarm-research/Chart.yaml
+# helm/autoconstitution/Chart.yaml
 apiVersion: v2
-name: swarm-research
-description: A Helm chart for SwarmResearch
+name: autoconstitution
+description: A Helm chart for autoconstitution
 type: application
 version: 0.1.0
 appVersion: "0.1.0"
@@ -1077,12 +1077,12 @@ keywords:
   - ml
   - multi-agent
   - research
-home: https://swarmresearch.io
+home: https://autoconstitution.io
 sources:
-  - https://github.com/swarmresearch/swarm-research
+  - https://github.com/autoconstitution/autoconstitution
 maintainers:
-  - name: SwarmResearch Team
-    email: team@swarmresearch.io
+  - name: autoconstitution Team
+    email: team@autoconstitution.io
 
 dependencies:
   - name: redis
@@ -1096,15 +1096,15 @@ dependencies:
 ```
 
 ```yaml
-# helm/swarm-research/values.yaml
-# Default values for swarm-research
+# helm/autoconstitution/values.yaml
+# Default values for autoconstitution
 
 replicaCount:
   api: 3
   worker: 10
 
 image:
-  repository: swarmresearch/swarm-api
+  repository: autoconstitution/swarm-api
   pullPolicy: IfNotPresent
   tag: ""
 
@@ -1143,14 +1143,14 @@ ingress:
   annotations:
     cert-manager.io/cluster-issuer: letsencrypt-prod
   hosts:
-    - host: api.swarmresearch.io
+    - host: api.autoconstitution.io
       paths:
         - path: /
           pathType: Prefix
   tls:
     - secretName: swarm-tls
       hosts:
-        - api.swarmresearch.io
+        - api.autoconstitution.io
 
 resources:
   api:
@@ -1294,8 +1294,8 @@ git checkout -b release/$VERSION
 
 # 3. Update version in files
 sed -i "s/version = \"[^\"]*\"/version = \"$VERSION\"/" pyproject.toml
-sed -i "s/version: [^\n]*/version: $VERSION/" helm/swarm-research/Chart.yaml
-sed -i "s/appVersion: \"[^\"]*\"/appVersion: \"$VERSION\"/" helm/swarm-research/Chart.yaml
+sed -i "s/version: [^\n]*/version: $VERSION/" helm/autoconstitution/Chart.yaml
+sed -i "s/appVersion: \"[^\"]*\"/appVersion: \"$VERSION\"/" helm/autoconstitution/Chart.yaml
 
 # 4. Update CHANGELOG
 echo "## [$VERSION] - $(date +%Y-%m-%d)" > CHANGELOG.tmp
@@ -1305,7 +1305,7 @@ cat CHANGELOG.md >> CHANGELOG.tmp
 mv CHANGELOG.tmp CHANGELOG.md
 
 # 5. Commit changes
-git add pyproject.toml helm/swarm-research/Chart.yaml CHANGELOG.md
+git add pyproject.toml helm/autoconstitution/Chart.yaml CHANGELOG.md
 git commit -m "chore(release): prepare $VERSION"
 
 # 6. Run tests
@@ -1340,7 +1340,7 @@ echo "✅ Release $VERSION complete!"
 echo ""
 echo "Next steps:"
 echo "  1. GitHub Actions will build and publish"
-echo "  2. Verify deployment at https://api.swarmresearch.io"
+echo "  2. Verify deployment at https://api.autoconstitution.io"
 echo "  3. Create GitHub release notes"
 ```
 
@@ -1389,7 +1389,7 @@ echo "  3. Create GitHub release notes"
 │                                                                              │
 │  Package Structure:                                                          │
 │  ┌─────────────────────────────────────────────────────────────────────┐    │
-│  │  swarm-research/                                                    │    │
+│  │  autoconstitution/                                                    │    │
 │  │  ├── pyproject.toml        ← Package metadata                      │    │
 │  │  ├── README.md             ← PyPI description                      │    │
 │  │  ├── LICENSE               ← MIT License                           │    │
@@ -1407,16 +1407,16 @@ echo "  3. Create GitHub release notes"
 │  Installation Methods:                                                       │
 │  ┌─────────────────────────────────────────────────────────────────────┐    │
 │  │  # Basic installation                                               │    │
-│  │  pip install swarm-research                                         │    │
+│  │  pip install autoconstitution                                         │    │
 │  │                                                                     │    │
 │  │  # With all providers                                               │    │
-│  │  pip install swarm-research[all]                                    │    │
+│  │  pip install autoconstitution[all]                                    │    │
 │  │                                                                     │    │
 │  │  # With specific providers                                          │    │
-│  │  pip install swarm-research[openai,anthropic]                       │    │
+│  │  pip install autoconstitution[openai,anthropic]                       │    │
 │  │                                                                     │    │
 │  │  # Development installation                                         │    │
-│  │  pip install swarm-research[dev]                                    │    │
+│  │  pip install autoconstitution[dev]                                    │    │
 │  └─────────────────────────────────────────────────────────────────────┘    │
 │                                                                              │
 │  Extras Configuration:                                                       │
@@ -1430,7 +1430,7 @@ echo "  3. Create GitHub release notes"
 │  │  api = ["fastapi>=0.100", "uvicorn[standard]>=0.23"]                │    │
 │  │  worker = ["celery>=5.3", "redis>=5.0"]                             │    │
 │  │  dev = ["pytest>=7.0", "ruff>=0.1", "mypy>=1.0"]                    │    │
-│  │  all = ["swarm-research[openai,anthropic,kimi,ollama,api,worker]"]  │    │
+│  │  all = ["autoconstitution[openai,anthropic,kimi,ollama,api,worker]"]  │    │
 │  └─────────────────────────────────────────────────────────────────────┘    │
 │                                                                              │
 └─────────────────────────────────────────────────────────────────────────────┘
@@ -1444,14 +1444,14 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "swarm-research"
+name = "autoconstitution"
 version = "0.1.0"
 description = "Massively parallel collaborative AI research system"
 readme = "README.md"
 license = {text = "MIT"}
 requires-python = ">=3.10"
 authors = [
-    {name = "SwarmResearch Team", email = "team@swarmresearch.io"},
+    {name = "autoconstitution Team", email = "team@autoconstitution.io"},
 ]
 keywords = [
     "ai",
@@ -1527,18 +1527,18 @@ dev = [
 
 # All extras
 all = [
-    "swarm-research[openai,anthropic,kimi,ollama,api,worker,postgres,vector,observability]"
+    "autoconstitution[openai,anthropic,kimi,ollama,api,worker,postgres,vector,observability]"
 ]
 
 [project.urls]
-Homepage = "https://swarmresearch.io"
-Documentation = "https://docs.swarmresearch.io"
-Repository = "https://github.com/swarmresearch/swarm-research"
-Issues = "https://github.com/swarmresearch/swarm-research/issues"
-Changelog = "https://github.com/swarmresearch/swarm-research/blob/main/CHANGELOG.md"
+Homepage = "https://autoconstitution.io"
+Documentation = "https://docs.autoconstitution.io"
+Repository = "https://github.com/autoconstitution/autoconstitution"
+Issues = "https://github.com/autoconstitution/autoconstitution/issues"
+Changelog = "https://github.com/autoconstitution/autoconstitution/blob/main/CHANGELOG.md"
 
 [project.scripts]
-swarm-research = "swarm_research.cli:main"
+autoconstitution = "swarm_research.cli:main"
 swarm-api = "swarm_research.api:run"
 swarm-worker = "swarm_research.worker:main"
 
@@ -1563,7 +1563,7 @@ include = [
 │                      DOCKER HUB DISTRIBUTION                                 │
 ├─────────────────────────────────────────────────────────────────────────────┤
 │                                                                              │
-│  Image Repository: swarmresearch/                                            │
+│  Image Repository: autoconstitution/                                            │
 │                                                                              │
 │  Available Images:                                                           │
 │  ┌─────────────────────────────────────────────────────────────────────┐    │
@@ -1594,16 +1594,16 @@ include = [
 │  Usage Examples:                                                             │
 │  ┌─────────────────────────────────────────────────────────────────────┐    │
 │  │  # Pull and run API server                                          │    │
-│  │  docker run -p 8000:8000 swarmresearch/swarm-api:latest             │    │
+│  │  docker run -p 8000:8000 autoconstitution/swarm-api:latest             │    │
 │  │                                                                     │    │
 │  │  # Run with environment variables                                   │    │
-│  │  docker run -e KIMI_API_KEY=xxx swarmresearch/swarm-api:v0.1.0      │    │
+│  │  docker run -e KIMI_API_KEY=xxx autoconstitution/swarm-api:v0.1.0      │    │
 │  │                                                                     │    │
 │  │  # Run worker                                                       │    │
-│  │  docker run swarmresearch/swarm-worker:latest                       │    │
+│  │  docker run autoconstitution/swarm-worker:latest                       │    │
 │  │                                                                     │    │
 │  │  # Development environment                                          │    │
-│  │  docker run -it swarmresearch/swarm-dev:latest bash                 │    │
+│  │  docker run -it autoconstitution/swarm-dev:latest bash                 │    │
 │  └─────────────────────────────────────────────────────────────────────┘    │
 │                                                                              │
 └─────────────────────────────────────────────────────────────────────────────┘
@@ -1645,7 +1645,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: swarmresearch/swarm-${{ matrix.image }}
+          images: autoconstitution/swarm-${{ matrix.image }}
           tags: |
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
@@ -1696,10 +1696,10 @@ jobs:
 │  ┌─────────────────────────────────────────────────────────────────────┐    │
 │  │  Target              URL                    Purpose                 │    │
 │  │  ─────────────────────────────────────────────────────────────────  │    │
-│  │  Main Docs          docs.swarmresearch.io   Primary documentation   │    │
-│  │  API Reference      api.swarmresearch.io    Auto-generated API docs │    │
-│  │  GitHub Pages       swarmresearch.github.io Mirror / fallback       │    │
-│  │  ReadTheDocs        swarmresearch.rtfd.io   Alternative hosting     │    │
+│  │  Main Docs          docs.autoconstitution.io   Primary documentation   │    │
+│  │  API Reference      api.autoconstitution.io    Auto-generated API docs │    │
+│  │  GitHub Pages       autoconstitution.github.io Mirror / fallback       │    │
+│  │  ReadTheDocs        autoconstitution.rtfd.io   Alternative hosting     │    │
 │  └─────────────────────────────────────────────────────────────────────┘    │
 │                                                                              │
 └─────────────────────────────────────────────────────────────────────────────┘
@@ -1709,13 +1709,13 @@ jobs:
 
 ```yaml
 # mkdocs.yml
-site_name: SwarmResearch Documentation
+site_name: autoconstitution Documentation
 site_description: Massively parallel collaborative AI research system
-site_url: https://docs.swarmresearch.io
-copyright: Copyright &copy; 2024 SwarmResearch Team
+site_url: https://docs.autoconstitution.io
+copyright: Copyright &copy; 2024 autoconstitution Team
 
-repo_name: swarmresearch/swarm-research
-repo_url: https://github.com/swarmresearch/swarm-research
+repo_name: autoconstitution/autoconstitution
+repo_url: https://github.com/autoconstitution/autoconstitution
 edit_uri: edit/main/docs/
 
 theme:
@@ -1787,11 +1787,11 @@ markdown_extensions:
 extra:
   social:
     - icon: fontawesome/brands/github
-      link: https://github.com/swarmresearch
+      link: https://github.com/autoconstitution
     - icon: fontawesome/brands/twitter
-      link: https://twitter.com/swarmresearch
+      link: https://twitter.com/autoconstitution
     - icon: fontawesome/brands/discord
-      link: https://discord.gg/swarmresearch
+      link: https://discord.gg/autoconstitution
   analytics:
     provider: google
     property: G-XXXXXXXXXX
@@ -2043,7 +2043,7 @@ apiVersion: external-secrets.io/v1beta1
 kind: ExternalSecret
 metadata:
   name: swarm-secrets
-  namespace: swarm-research
+  namespace: autoconstitution
 spec:
   refreshInterval: 1h
   secretStoreRef:
@@ -2239,16 +2239,16 @@ docker-compose up -d --scale worker=10
 kubectl apply -k k8s/overlays/production
 
 # View pods
-kubectl get pods -n swarm-research
+kubectl get pods -n autoconstitution
 
 # View logs
-kubectl logs -f deployment/swarm-api -n swarm-research
+kubectl logs -f deployment/swarm-api -n autoconstitution
 
 # Scale deployment
-kubectl scale deployment swarm-worker --replicas=20 -n swarm-research
+kubectl scale deployment swarm-worker --replicas=20 -n autoconstitution
 
 # Helm install
-helm install swarm-research ./helm/swarm-research -f values-production.yaml
+helm install autoconstitution ./helm/autoconstitution -f values-production.yaml
 ```
 
 ### PyPI Commands

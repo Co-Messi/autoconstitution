@@ -1,8 +1,8 @@
 # environment.yml
-# Conda environment specification for SwarmResearch Benchmark
+# Conda environment specification for autoconstitution Benchmark
 # Version: 1.0.0
 
-name: swarmresearch-benchmark
+name: autoconstitution-benchmark
 channels:
   - conda-forge
   - defaults
@@ -22,4 +22,4 @@ dependencies:
     - rich==13.7.0
     - tqdm==4.66.1
     - click==8.1.7
-    - swarmresearch-benchmark==1.0.0
+    - autoconstitution-benchmark==1.0.0
