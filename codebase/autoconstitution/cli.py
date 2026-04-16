@@ -357,7 +357,7 @@ def run(
     ] = False,
 ) -> None:
     """
-    Run a new swarm research experiment.
+    Legacy orchestrator experiment runner.
     
     Examples:
         autoconstitution run
@@ -498,7 +498,7 @@ def resume(
     ] = None,
 ) -> None:
     """
-    Resume a previously paused or interrupted experiment.
+    Resume a legacy orchestrator experiment.
     
     Examples:
         autoconstitution resume consensus_test_a1b2c3d4
@@ -601,7 +601,7 @@ def status(
     ] = 2,
 ) -> None:
     """
-    Check the status of experiments.
+    Check the status of legacy orchestrator experiments.
     
     Examples:
         autoconstitution status
@@ -744,7 +744,7 @@ def benchmark(
     ] = None,
 ) -> None:
     """
-    Run benchmark suite to compare different configurations.
+    Run legacy orchestrator benchmarks.
     
     Examples:
         autoconstitution benchmark
@@ -964,7 +964,7 @@ def clean(
     ] = False,
 ) -> None:
     """
-    Clean up old experiment files.
+    Clean up legacy experiment files.
     
     Examples:
         autoconstitution clean

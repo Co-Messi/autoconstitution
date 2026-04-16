@@ -22,3 +22,4 @@ def test_cli_help_uses_product_language() -> None:
     assert result.exit_code == 0
     assert "multi-agent" in result.stdout.lower()
     assert "swarm research experiments" not in result.stdout.lower()
+    assert "legacy orchestrator experiment runner" in result.stdout.lower()
