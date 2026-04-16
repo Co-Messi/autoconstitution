@@ -1,8 +1,9 @@
 """
-autoconstitution CLI - A command-line interface for managing swarm research experiments.
+autoconstitution CLI.
 
-This module provides commands for running, resuming, monitoring, and benchmarking
-swarm research experiments with rich output and progress bars.
+This module exposes both the legacy experiment-management commands and the
+product-facing Constitutional AI loop commands. Public-facing help should frame
+the tool as a multi-agent improvement loop rather than a generic swarm runner.
 """
 
 from __future__ import annotations
@@ -39,7 +40,10 @@ console = Console()
 # Create the main Typer app
 app = typer.Typer(
     name="autoconstitution",
-    help="autoconstitution CLI - Manage swarm research experiments",
+    help=(
+        "autoconstitution CLI - multi-agent autoresearch for critique, revision, "
+        "and keep-or-revert improvement loops"
+    ),
     no_args_is_help=True,
     rich_markup_mode="rich",
     add_completion=True,
@@ -1029,7 +1033,10 @@ def clean(
 
 cai_app = typer.Typer(
     name="cai",
-    help="Constitutional AI loop: Student answers, Judge critiques, Student revises.",
+    help=(
+        "Constitutional multi-agent loop: agents propose, critique, revise, and "
+        "judge under an editable constitution."
+    ),
     no_args_is_help=True,
     rich_markup_mode="rich",
 )
