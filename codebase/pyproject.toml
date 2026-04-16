@@ -1,0 +1,177 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "autoconstitution"
+version = "0.2.0"
+description = "Constitutional AI hierarchy for recursive self-improvement — Karpathy's autoresearch + Anthropic's CAI, made multi-agent."
+readme = "README.md"
+license = {text = "MIT"}
+requires-python = ">=3.9"
+authors = [
+    {name = "autoconstitution contributors"},
+]
+keywords = [
+    "constitutional-ai",
+    "cai",
+    "rlaif",
+    "autoresearch",
+    "llm",
+    "alignment",
+    "self-improvement",
+    "multi-agent",
+    "dpo",
+    "fine-tuning",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+dependencies = [
+    "typer>=0.9.0",
+    "rich>=13.0.0",
+    "pyyaml>=6.0",
+    "typing-extensions>=4.0.0",
+    "pydantic>=2.0.0",
+    "pydantic-settings>=2.0.0",
+    "httpx>=0.25.0",
+    "aiofiles>=23.0.0",
+]
+
+[project.optional-dependencies]
+# ---- Provider backends (pick whichever you have keys / local runtime for) ----
+kimi = [
+    "openai>=1.0.0",  # Kimi uses OpenAI-compatible API
+]
+anthropic = [
+    "anthropic>=0.39.0",
+]
+openai = [
+    "openai>=1.0.0",
+    "tiktoken>=0.5.0",
+]
+ollama = [
+    # Ollama is HTTP-only; httpx already in base deps
+]
+# All providers bundled
+providers = [
+    "openai>=1.0.0",
+    "anthropic>=0.39.0",
+    "tiktoken>=0.5.0",
+]
+
+# ---- Fine-tuning stack (DPO / GRPO / SFT via TRL) ----
+train = [
+    "torch>=2.1.0",
+    "transformers>=4.40.0",
+    "trl>=0.9.0",
+    "peft>=0.10.0",
+    "accelerate>=0.28.0",
+    "datasets>=2.18.0",
+    "bitsandbytes>=0.43.0 ; platform_system != 'Darwin'",
+]
+
+# ---- Hardware acceleration ----
+cuda = [
+    "torch>=2.1.0",
+    "nvidia-ml-py>=12.535.0",
+]
+mps = [
+    "torch>=2.1.0",
+]
+
+# ---- Dev / CI ----
+dev = [
+    "pytest>=7.0.0",
+    "pytest-asyncio>=0.23.0",
+    "pytest-cov>=4.0.0",
+    "mypy>=1.0.0",
+    "ruff>=0.1.0",
+    "black>=23.0.0",
+]
+
+# ---- Everything (for `pip install "autoconstitution[all]"`) ----
+all = [
+    "autoconstitution[providers,train,dev]",
+]
+
+[project.scripts]
+autoconstitution = "autoconstitution.cli:main"
+# Alias for discoverability — `autoconst run` is faster to type
+autoconst = "autoconstitution.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/autoconstitution/autoconstitution"
+Documentation = "https://autoconstitution.readthedocs.io"
+Repository = "https://github.com/autoconstitution/autoconstitution"
+Issues = "https://github.com/autoconstitution/autoconstitution/issues"
+
+[tool.hatch.build.targets.wheel]
+packages = ["autoconstitution"]
+
+[tool.hatch.build.targets.wheel.force-include]
+"autoconstitution/py.typed" = "autoconstitution/py.typed"
+"constitution.md" = "autoconstitution/constitution.md"
+
+[tool.black]
+line-length = 100
+target-version = ['py39', 'py310', 'py311', 'py312']
+
+[tool.ruff]
+line-length = 100
+target-version = "py39"
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "F",   # Pyflakes
+    "W",   # pycodestyle warnings
+    "I",   # isort
+    "N",   # pep8-naming
+    "UP",  # pyupgrade
+    "B",   # flake8-bugbear
+    "C4",  # flake8-comprehensions
+    "SIM", # flake8-simplify
+]
+
+[tool.mypy]
+python_version = "3.9"
+strict = true
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+asyncio_mode = "auto"
+addopts = "-v --cov=autoconstitution --cov-report=term-missing"
+
+[tool.coverage.run]
+branch = true
+source = ["autoconstitution"]
+omit = [
+    "*/tests/*",
+    "*/examples/*",
+    "autoconstitution/example_usage.py",
+    "autoconstitution/cai/example_usage.py",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+    "if TYPE_CHECKING:",
+    "@abstractmethod",
+]

@@ -1,0 +1,33 @@
+# seeds.yaml - Master seed configuration for SwarmResearch Benchmark
+# Version: 1.0.0
+
+benchmark_version: "1.0.0"
+master_seed: 42
+
+# Component-specific seeds (derived from master_seed)
+# These ensure reproducibility across all benchmark components
+seeds:
+  dataset_shuffle: 42           # Dataset ordering and splits
+  agent_initialization: 123     # Agent personality/role assignment
+  synthetic_generation: 456     # Synthetic paper generation
+  evaluation_sampling: 789      # Evaluation subset selection
+  communication_order: 101112   # Agent communication sequencing
+  task_assignment: 131415       # Dynamic task allocation
+  noise_injection: 161718       # Stochastic exploration noise
+
+# Task-specific seed mapping
+task_seeds:
+  dls: "dataset_shuffle"        # Distributed Literature Synthesis
+  chg: "agent_initialization"   # Collaborative Hypothesis Generation
+  cbd: "communication_order"    # Consensus-Based Decision Making
+  dta: "task_assignment"        # Dynamic Task Allocation
+
+# Seed derivation settings
+derivation:
+  algorithm: "hash_md5"
+  modulus: 4294967296  # 2^32 for 32-bit compatibility
+
+# Verification settings
+verification:
+  test_sequence_length: 10
+  tolerance: 0.0  # Exact match required

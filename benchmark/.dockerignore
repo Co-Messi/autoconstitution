@@ -1,0 +1,72 @@
+# .dockerignore
+# Files to exclude from Docker build context
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Results (mount as volume)
+results/
+logs/
+*.log
+
+# Documentation
+*.md
+docs/
+
+# Tests (optional - include if running tests in container)
+tests/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.temp
+tmp/
+temp/
+
+# Large files (should be downloaded)
+models/*.gguf
+datasets/*.tar.gz
+
+# Cache
+.cache/
+*.cache

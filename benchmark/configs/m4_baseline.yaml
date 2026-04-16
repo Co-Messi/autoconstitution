@@ -1,0 +1,107 @@
+# configs/m4_baseline.yaml
+# SwarmResearch Benchmark Configuration for Apple M4 Baseline
+# Version: 1.0.0
+
+benchmark:
+  version: "1.0.0"
+  name: "SwarmResearch M4 Baseline"
+  seed: 42
+
+hardware:
+  platform: "apple_silicon"
+  chip: "m4"
+  threads: 8
+  memory_gb: 16
+
+dataset:
+  path: "./datasets/swarmresearch_bench_v1"
+  verify_checksums: true
+  version: "1.0.0"
+
+model:
+  name: "swarm-agent-small-3B-int8"
+  path: "./models/swarm-agent-small-3B-int8.gguf"
+  parameters: "3B"
+  quantization: "int8"
+  context_length: 8192
+  
+inference:
+  backend: "llama.cpp"
+  temperature: 0.7
+  top_p: 0.9
+  max_tokens: 1024
+  threads: 8
+  batch_size: 512
+  gpu_layers: 0  # CPU-only for consistency
+
+agents:
+  default_count: 5
+  temperature: 0.7
+  top_p: 0.9
+  max_tokens_per_call: 1024
+  context_window: 8192
+  
+  communication:
+    topology: "fully_connected"
+    message_limit: 50
+    format: "structured_json"
+    timeout_seconds: 60
+
+tasks:
+  dls:
+    enabled: true
+    name: "Distributed Literature Synthesis"
+    agent_count: 5
+    papers_per_agent: 10
+    time_limit: 300
+    output_max_words: 2000
+    
+  chg:
+    enabled: true
+    name: "Collaborative Hypothesis Generation"
+    agent_count: 4
+    proposers: 2
+    critics: 2
+    rounds: 3
+    time_limit: 240
+    output_hypotheses: 5
+    
+  cbd:
+    enabled: true
+    name: "Consensus-Based Decision Making"
+    agent_count: 6
+    decision_points: 10
+    consensus_threshold: 0.8
+    time_limit: 180
+    
+  dta:
+    enabled: true
+    name: "Dynamic Task Allocation"
+    min_agents: 4
+    max_agents: 8
+    workflow_steps: 15
+    time_limit: 360
+
+orchestration:
+  mode: "decentralized_with_moderator"
+  
+  moderator:
+    enabled: true
+    role: "consensus_checker"
+    intervention_threshold: 0.5
+    
+  synchronization:
+    type: "round_robin"
+    rounds: 3
+    timeout_per_round: 60
+
+output:
+  format: "json"
+  include_logs: true
+  include_transcripts: false
+  include_agent_states: false
+
+reproducibility:
+  deterministic: true
+  verify_checksums: true
+  log_environment: true

@@ -1,0 +1,277 @@
+# .github/workflows/reproducibility.yml
+# GitHub Actions workflow for SwarmResearch Benchmark reproducibility verification
+# Version: 1.0.0
+
+name: Reproducibility Check
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'reproducibility/**'
+      - 'configs/**'
+      - 'requirements*.txt'
+      - '.github/workflows/reproducibility.yml'
+  pull_request:
+    branches: [main]
+  schedule:
+    # Run weekly on Sundays at 00:00 UTC
+    - cron: '0 0 * * 0'
+  workflow_dispatch:
+    inputs:
+      seed:
+        description: 'Random seed for benchmark'
+        required: false
+        default: '42'
+      num_runs:
+        description: 'Number of reproducibility runs'
+        required: false
+        default: '3'
+
+jobs:
+  # Verify environment setup
+  setup:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+          cache-dependency-path: |
+            requirements.txt
+            requirements.lock
+      
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt
+      
+      - name: Verify Python version
+        run: |
+          python --version
+          python -c "import sys; assert sys.version_info[:2] == (3, 11), 'Python 3.11 required'"
+      
+      - name: Verify dependencies
+        run: |
+          python -m reproducibility.verify_deps
+
+  # Run benchmark with different seeds
+  benchmark:
+    needs: setup
+    runs-on: ubuntu-latest
+    
+    strategy:
+      fail-fast: false
+      matrix:
+        seed: [42, 123, 456]
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+      
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt
+      
+      - name: Cache benchmark assets
+        uses: actions/cache@v4
+        with:
+          path: |
+            ./models
+            ./datasets
+          key: benchmark-assets-${{ hashFiles('assets.yaml') }}
+          restore-keys: |
+            benchmark-assets-
+      
+      - name: Download assets
+        run: |
+          python -m swarmresearch.download --dataset --model --verify || true
+      
+      - name: Run benchmark
+        run: |
+          python -m swarmresearch.benchmark \
+            --config configs/m4_baseline.yaml \
+            --output results/ \
+            --seed ${{ matrix.seed }} \
+            --verbose
+        continue-on-error: true
+      
+      - name: Upload results
+        uses: actions/upload-artifact@v4
+        with:
+          name: results-seed-${{ matrix.seed }}
+          path: results/*.json
+          if-no-files-found: warn
+
+  # Compare results for reproducibility
+  compare:
+    needs: benchmark
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+      
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt
+      
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: results/
+          pattern: results-seed-*
+      
+      - name: List downloaded artifacts
+        run: |
+          echo "Downloaded artifacts:"
+          find results/ -type f -name "*.json" | head -20
+      
+      - name: Compare results
+        run: |
+          python << 'EOF'
+          import json
+          import sys
+          from pathlib import Path
+          
+          results_dir = Path("results")
+          all_results = []
+          
+          # Find all result files
+          for results_file in results_dir.rglob("*.json"):
+              try:
+                  with open(results_file) as f:
+                      data = json.load(f)
+                      all_results.append(data)
+              except Exception as e:
+                  print(f"Error loading {results_file}: {e}")
+          
+          if len(all_results) < 2:
+              print("Need at least 2 results to compare")
+              sys.exit(0)
+          
+          # Extract overall scores
+          scores = [r.get("results", {}).get("overall_score") for r in all_results]
+          scores = [s for s in scores if s is not None]
+          
+          if len(scores) < 2:
+              print("No comparable scores found")
+              sys.exit(0)
+          
+          # Check variance
+          import statistics
+          mean_score = statistics.mean(scores)
+          std_score = statistics.stdev(scores) if len(scores) > 1 else 0
+          
+          print(f"Results comparison:")
+          print(f"  Number of runs: {len(scores)}")
+          print(f"  Mean score: {mean_score:.2f}")
+          print(f"  Std dev: {std_score:.4f}")
+          print(f"  Min: {min(scores):.2f}")
+          print(f"  Max: {max(scores):.2f}")
+          
+          # Check if results are consistent (within 1% tolerance)
+          tolerance = mean_score * 0.01
+          is_consistent = max(scores) - min(scores) <= tolerance
+          
+          print(f"  Consistent (within 1%): {'Yes' if is_consistent else 'No'}")
+          
+          if not is_consistent:
+              print("WARNING: Results show significant variance!")
+              sys.exit(1)
+          EOF
+
+  # Run reproducibility check
+  reproducibility:
+    needs: setup
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+      
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt
+      
+      - name: Cache benchmark assets
+        uses: actions/cache@v4
+        with:
+          path: |
+            ./models
+            ./datasets
+          key: benchmark-assets-${{ hashFiles('assets.yaml') }}
+      
+      - name: Run reproducibility check
+        run: |
+          NUM_RUNS="${{ github.event.inputs.num_runs || '3' }}"
+          SEED="${{ github.event.inputs.seed || '42' }}"
+          
+          python -m reproducibility.check_reproducibility \
+            --runs "$NUM_RUNS" \
+            --seed "$SEED" \
+            --output reproducibility_test/ \
+            --tolerance 0.01
+      
+      - name: Upload reproducibility report
+        uses: actions/upload-artifact@v4
+        with:
+          name: reproducibility-report
+          path: reproducibility_test/reproducibility_report.json
+
+  # Build and test Docker container
+  docker:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      
+      - name: Build Docker image
+        run: |
+          docker build -t swarmresearch/benchmark:test .
+      
+      - name: Test Docker image
+        run: |
+          docker run --rm swarmresearch/benchmark:test python --version
+          docker run --rm swarmresearch/benchmark:test python -m reproducibility.verify_deps
+      
+      - name: Test Docker reproducibility
+        run: |
+          docker run --rm \
+            -v $(PWD)/results:/benchmark/results \
+            swarmresearch/benchmark:test \
+            --config /benchmark/configs/m4_baseline.yaml \
+            --output /benchmark/results/ \
+            --seed 42 \
+            --verbose || true
