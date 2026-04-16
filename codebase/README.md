@@ -164,6 +164,23 @@ print(metrics)
 
 ---
 
+## Hero example: financial analyst
+
+One concrete way to use the repo is to improve the thinking process of a
+financial-analysis agent.
+
+```bash
+autoconstitution cai run \
+  --prompts-file examples/financial_analyst/prompts.txt \
+  --constitution examples/financial_analyst/constitution.finance.md \
+  --output outputs/financial_analyst_pairs.jsonl
+```
+
+That example is meant to improve workflow quality, not just generate one-off
+market commentary. See [examples/financial_analyst/README.md](./examples/financial_analyst/README.md).
+
+---
+
 ## How it works
 
 ### The inner loop

@@ -1,0 +1,5 @@
+Design a better workflow for analyzing earnings revisions in a public company.
+Create a rubric for distinguishing real financial edge from story-driven speculation.
+Rewrite a financial-analysis agent prompt so it separates facts, assumptions, and conclusions.
+Design a judge checklist for catching fake precision in equity research summaries.
+
