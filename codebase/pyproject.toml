@@ -8,7 +8,7 @@ version = "0.2.0"
 description = "Constitutional AI hierarchy for recursive self-improvement — Karpathy's autoresearch + Anthropic's CAI, made multi-agent."
 readme = "README.md"
 license = {text = "MIT"}
-requires-python = ">=3.9"
+requires-python = ">=3.11"
 authors = [
     {name = "autoconstitution contributors"},
 ]
@@ -29,10 +29,9 @@ classifiers = [
     "Intended Audience :: Science/Research",
     "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.9",
-    "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
 ]
 dependencies = [
@@ -98,6 +97,7 @@ dev = [
     "pytest>=7.0.0",
     "pytest-asyncio>=0.23.0",
     "pytest-cov>=4.0.0",
+    "pytest-timeout>=2.2.0",
     "mypy>=1.0.0",
     "ruff>=0.1.0",
     "black>=23.0.0",
@@ -128,11 +128,11 @@ packages = ["autoconstitution"]
 
 [tool.black]
 line-length = 100
-target-version = ['py39', 'py310', 'py311', 'py312']
+target-version = ['py311', 'py312', 'py313']
 
 [tool.ruff]
 line-length = 100
-target-version = "py39"
+target-version = "py311"
 
 [tool.ruff.lint]
 select = [
@@ -148,11 +148,46 @@ select = [
 ]
 
 [tool.mypy]
-python_version = "3.9"
+python_version = "3.11"
 strict = true
 warn_return_any = true
 warn_unused_configs = true
 disallow_untyped_defs = true
+
+# Slice-based strict enforcement. Modules fully typed and strict-clean:
+#   autoconstitution.ratchet, autoconstitution.ui (when landed),
+#   autoconstitution.providers.fake (when landed), autoconstitution.cai (slice 2).
+# Legacy modules are excluded from strict; strict is enforced via ratchet on the
+# modules we've explicitly touched. New code in strict-clean modules must not
+# regress.
+[[tool.mypy.overrides]]
+module = [
+    "autoconstitution.agents.*",
+    "autoconstitution.orchestrator",
+    "autoconstitution.orchestrator_adapter",
+    "autoconstitution.pollination",
+    "autoconstitution.branch_manager",
+    "autoconstitution.checkpoint",
+    "autoconstitution.dashboard",
+    "autoconstitution.experiment",
+    "autoconstitution.example_usage",
+    "autoconstitution.providers.ollama",
+    "autoconstitution.providers.auto_detect",
+    "autoconstitution.providers.anthropic",
+    "autoconstitution.providers.kimi",
+    "autoconstitution.providers.openai",
+    "autoconstitution.cli",
+    "autoconstitution.config",
+    "autoconstitution.hardware.*",
+    "autoconstitution.metrics.*",
+]
+disallow_untyped_defs = false
+disallow_untyped_calls = false
+ignore_errors = true
+
+[[tool.mypy.overrides]]
+module = ["ollama", "yaml"]
+ignore_missing_imports = true
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
