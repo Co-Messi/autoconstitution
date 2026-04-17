@@ -49,6 +49,29 @@ app = typer.Typer(
     add_completion=True,
 )
 
+# Legacy experiment-orchestrator commands live behind `autoconstitution legacy ...`.
+# The product CAI loop is the primary surface (`autoconstitution cai run`,
+# `autoconstitution demo`); these commands predate that split and stick around
+# for existing users / scripts. Each prints a one-line deprecation notice on use.
+legacy_app = typer.Typer(
+    name="legacy",
+    help=(
+        "Legacy experiment-orchestrator commands. Prefer `autoconstitution cai run` "
+        "for new work; these are kept for backwards compatibility."
+    ),
+    no_args_is_help=True,
+    rich_markup_mode="rich",
+)
+app.add_typer(legacy_app, name="legacy")
+
+
+def _legacy_notice(name: str) -> None:
+    """One-line deprecation notice printed at the top of every legacy command."""
+    console.print(
+        f"[yellow]`autoconstitution legacy {name}` is a legacy command. "
+        f"For new work, use `autoconstitution cai run` or `autoconstitution demo`.[/yellow]"
+    )
+
 
 # ============================================================================
 # Configuration Classes
@@ -321,7 +344,7 @@ def create_progress_bar() -> Progress:
 # Commands
 # ============================================================================
 
-@app.command()
+@legacy_app.command()
 def run(
     name: Annotated[
         Optional[str],
@@ -482,7 +505,7 @@ def run(
     console.print(f"\nResults saved to: {exp_config.output_dir}")
 
 
-@app.command()
+@legacy_app.command()
 def resume(
     experiment_id: Annotated[
         str,
@@ -581,7 +604,7 @@ def resume(
     console.print(f"Total iterations: {state.current_iteration}")
 
 
-@app.command()
+@legacy_app.command()
 def status(
     experiment_id: Annotated[
         Optional[str],
@@ -720,7 +743,7 @@ def status(
         display_status()
 
 
-@app.command()
+@legacy_app.command()
 def benchmark(
     config: Annotated[
         Optional[Path],
