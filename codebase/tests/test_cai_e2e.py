@@ -25,6 +25,7 @@ from autoconstitution.ui.events import (
     RoleStart,
     RoundEnd,
     RoundStart,
+    Token,
 )
 
 _COMPLIANT = '{"verdict": "compliant", "critiques": []}'
@@ -49,10 +50,10 @@ class TestFakeProviderDrivesLoop:
         assert result.initial_answer == "one good answer"
         assert result.chosen == "one good answer"
 
-        # Event timeline on the happy path:
-        #   RoundStart → Student{Start,End} → Judge{Start,End} → Critique → RoundEnd
-        types = [type(e) for e in renderer.events]
-        assert types == [
+        # Event timeline on the happy path (filtering streamed Tokens which are
+        # interleaved between RoleStart and RoleEnd when providers stream):
+        non_token = [type(e) for e in renderer.events if not isinstance(e, Token)]
+        assert non_token == [
             RoundStart,
             RoleStart,
             RoleEnd,

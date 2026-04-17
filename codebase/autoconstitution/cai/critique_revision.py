@@ -29,7 +29,7 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
-from collections.abc import Callable
+from collections.abc import AsyncIterator, Callable
 from dataclasses import dataclass, field
 from typing import Any, Literal
 
@@ -39,10 +39,12 @@ from autoconstitution.ui.events import (
     Event,
     LoopError,
     Revision,
+    Role,
     RoleEnd,
     RoleStart,
     RoundEnd,
     RoundStart,
+    Token,
 )
 from autoconstitution.ui.protocol import Renderer
 
@@ -156,14 +158,24 @@ class CritiqueRevisionLoop:
         """
         emit = _make_emitter(renderer)
 
+        streaming = bool(renderer and renderer.supports_streaming)
+
         emit(RoundStart(round=1, prompt=prompt))
-        emit(RoleStart(role="student", round=1))
-        try:
-            initial_answer = await self.student.respond(prompt)
-        except Exception as exc:  # noqa: BLE001 - surfaced to caller via LoopError
-            emit(LoopError(round=1, role="student", message=str(exc)))
-            raise
-        emit(RoleEnd(role="student", round=1, output=initial_answer))
+
+        async def _student_respond() -> str:
+            return await self.student.respond(prompt)
+
+        def _student_respond_stream() -> AsyncIterator[str]:
+            return self.student.respond_stream(prompt)
+
+        initial_answer = await _run_role(
+            emit,
+            role="student",
+            round_num=1,
+            streaming=streaming,
+            complete=_student_respond,
+            stream=_student_respond_stream,
+        )
 
         current_answer = initial_answer
         critiques: list[CritiqueResult] = []
@@ -172,15 +184,23 @@ class CritiqueRevisionLoop:
 
         for round_num in range(1, self.max_rounds + 1):
             rounds_used = round_num
-            emit(RoleStart(role="judge", round=round_num))
-            try:
-                raw_critique = await self.judge.critique(prompt, current_answer)
-            except Exception as exc:  # noqa: BLE001
-                emit(LoopError(round=round_num, role="judge", message=str(exc)))
-                raise
+
+            async def _judge_complete(ca: str = current_answer) -> str:
+                return await self.judge.critique(prompt, ca)
+
+            def _judge_stream(ca: str = current_answer) -> AsyncIterator[str]:
+                return self.judge.critique_stream(prompt, ca)
+
+            raw_critique = await _run_role(
+                emit,
+                role="judge",
+                round_num=round_num,
+                streaming=streaming,
+                complete=_judge_complete,
+                stream=_judge_stream,
+            )
             critique = CritiqueResult.from_judge_output(round_num, raw_critique)
             critiques.append(critique)
-            emit(RoleEnd(role="judge", round=round_num, output=raw_critique))
             emit(
                 Critique(
                     round=round_num,
@@ -203,17 +223,27 @@ class CritiqueRevisionLoop:
 
             # Ask Student to revise given critiques.
             critique_text = self._format_critiques(critique.critiques)
-            emit(RoleStart(role="student", round=round_num))
-            try:
-                revised = await self.student.revise(
-                    prompt=prompt,
-                    previous_answer=current_answer,
-                    critique=critique_text,
+
+            async def _student_revise(
+                ca: str = current_answer, ct: str = critique_text
+            ) -> str:
+                return await self.student.revise(
+                    prompt=prompt, previous_answer=ca, critique=ct,
                 )
-            except Exception as exc:  # noqa: BLE001
-                emit(LoopError(round=round_num, role="student", message=str(exc)))
-                raise
-            emit(RoleEnd(role="student", round=round_num, output=revised))
+
+            def _student_revise_stream(
+                ca: str = current_answer, ct: str = critique_text
+            ) -> AsyncIterator[str]:
+                return self.student.revise_stream(prompt, ca, ct)
+
+            revised = await _run_role(
+                emit,
+                role="student",
+                round_num=round_num,
+                streaming=streaming,
+                complete=_student_revise,
+                stream=_student_revise_stream,
+            )
 
             identical = revised.strip() == current_answer.strip()
             emit(
@@ -292,6 +322,36 @@ class CritiqueRevisionLoop:
             severity = c.get("severity", "moderate")
             lines.append(f"- [{principle}] ({severity}) Offending: {quote!r} → Fix: {fix}")
         return "\n".join(lines)
+
+
+async def _run_role(
+    emit: _Emitter,
+    *,
+    role: Role,
+    round_num: int,
+    streaming: bool,
+    complete: Callable[[], Any],
+    stream: Callable[[], AsyncIterator[str]],
+) -> str:
+    """Run one role's turn. Emits RoleStart, per-token events (if streaming),
+    and RoleEnd. Provider errors are surfaced as LoopError before re-raising.
+    """
+    emit(RoleStart(role=role, round=round_num))
+    try:
+        if streaming:
+            chunks: list[str] = []
+            async for chunk in stream():
+                if chunk:
+                    emit(Token(role=role, round=round_num, text=chunk))
+                    chunks.append(chunk)
+            output = "".join(chunks)
+        else:
+            output = await complete()
+    except Exception as exc:  # noqa: BLE001
+        emit(LoopError(round=round_num, role=role, message=str(exc)))
+        raise
+    emit(RoleEnd(role=role, round=round_num, output=output))
+    return output
 
 
 def _make_emitter(renderer: Renderer | None) -> _Emitter:

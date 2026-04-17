@@ -54,6 +54,16 @@ class ScriptedProvider:
             raise RuntimeError("ScriptedProvider exhausted")
         return self._responses.pop(0)
 
+    async def stream(
+        self,
+        prompt: str,
+        system: Optional[str] = None,
+        temperature: float = 0.7,
+        max_tokens: int = 2048,
+    ):  # pragma: no cover - unused in the non-streaming tests in this file
+        text = await self.complete(prompt, system, temperature, max_tokens)
+        yield text
+
 
 class ExplodingProvider:
     """Raises on the N-th call. Useful for testing error propagation."""
@@ -74,6 +84,16 @@ class ExplodingProvider:
         if self.call_count == self.fail_on_call:
             raise self.exc
         return f"ok#{self.call_count}"
+
+    async def stream(
+        self,
+        prompt: str,
+        system: Optional[str] = None,
+        temperature: float = 0.7,
+        max_tokens: int = 2048,
+    ):  # pragma: no cover - unused
+        text = await self.complete(prompt, system, temperature, max_tokens)
+        yield text
 
 
 def _make_loop(
@@ -190,9 +210,10 @@ class TestEventEmission:
         renderer = CapturingRenderer()
         await loop.run("prompt", renderer=renderer)
 
-        # Expected order: RoundStart, RoleStart(student), RoleEnd(student),
+        # Expected order (ignoring streamed Tokens which CapturingRenderer
+        # flags as supported): RoundStart, RoleStart(student), RoleEnd(student),
         # RoleStart(judge), RoleEnd(judge), Critique, RoundEnd.
-        kinds = [type(e).__name__ for e in renderer.events]
+        kinds = [type(e).__name__ for e in renderer.events if type(e).__name__ != "Token"]
         assert kinds == [
             "RoundStart",
             "RoleStart",
@@ -318,6 +339,15 @@ class TestRunBatch:
                     raise RuntimeError("middle prompt broke")
                 return r
 
+            async def stream(
+                self,
+                prompt: str,
+                system: Optional[str] = None,
+                temperature: float = 0.7,
+                max_tokens: int = 2048,
+            ):  # pragma: no cover
+                yield await self.complete(prompt, system, temperature, max_tokens)
+
         student = StudentAgent(provider=OneFailProvider())
         judge = JudgeAgent(
             provider=ScriptedProvider(
@@ -358,6 +388,15 @@ class TestRunBatch:
                 async with lock:
                     current -= 1
                 return '{"verdict": "compliant", "critiques": []}'
+
+            async def stream(
+                self,
+                prompt: str,
+                system: Optional[str] = None,
+                temperature: float = 0.7,
+                max_tokens: int = 2048,
+            ):  # pragma: no cover
+                yield await self.complete(prompt, system, temperature, max_tokens)
 
         student = StudentAgent(provider=CountingProvider())
         judge = JudgeAgent(provider=CountingProvider())
