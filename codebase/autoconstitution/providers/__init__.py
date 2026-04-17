@@ -11,9 +11,10 @@ This module provides:
 from __future__ import annotations
 
 from abc import ABC
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Callable, Dict, Optional
+from typing import Any, Dict, Optional
 
 
 class ProviderType(str, Enum):
@@ -21,6 +22,7 @@ class ProviderType(str, Enum):
     ANTHROPIC = "anthropic"
     OPENAI = "openai"
     OLLAMA = "ollama"
+    FAKE = "fake"
 
 
 class Role(str, Enum):
@@ -34,12 +36,12 @@ class Role(str, Enum):
 class Message:
     role: Role
     content: str
-    name: Optional[str] = None
-    tool_calls: Optional[list[dict[str, Any]]] = None
-    tool_call_id: Optional[str] = None
+    name: str | None = None
+    tool_calls: list[dict[str, Any]] | None = None
+    tool_call_id: str | None = None
 
-    def to_dict(self) -> Dict[str, Any]:
-        result: Dict[str, Any] = {"role": self.role.value, "content": self.content}
+    def to_dict(self) -> dict[str, Any]:
+        result: dict[str, Any] = {"role": self.role.value, "content": self.content}
         if self.name:
             result["name"] = self.name
         if self.tool_calls:
@@ -49,21 +51,21 @@ class Message:
         return result
 
     @classmethod
-    def system(cls, content: str) -> "Message":
+    def system(cls, content: str) -> Message:
         return cls(role=Role.SYSTEM, content=content)
 
     @classmethod
-    def user(cls, content: str, name: Optional[str] = None) -> "Message":
+    def user(cls, content: str, name: str | None = None) -> Message:
         return cls(role=Role.USER, content=content, name=name)
 
     @classmethod
     def assistant(
-        cls, content: str, tool_calls: Optional[list[dict[str, Any]]] = None
-    ) -> "Message":
+        cls, content: str, tool_calls: list[dict[str, Any]] | None = None
+    ) -> Message:
         return cls(role=Role.ASSISTANT, content=content, tool_calls=tool_calls)
 
     @classmethod
-    def tool(cls, content: str, tool_call_id: str) -> "Message":
+    def tool(cls, content: str, tool_call_id: str) -> Message:
         return cls(role=Role.TOOL, content=content, tool_call_id=tool_call_id)
 
 
@@ -71,9 +73,9 @@ class Message:
 class Tool:
     name: str
     description: str
-    parameters: Dict[str, Any]
+    parameters: dict[str, Any]
 
-    def to_openai_format(self) -> Dict[str, Any]:
+    def to_openai_format(self) -> dict[str, Any]:
         return {
             "type": "function",
             "function": {
@@ -100,18 +102,18 @@ class TokenUsage:
 @dataclass
 class CompletionRequest:
     messages: list[Message]
-    model: Optional[str] = None
+    model: str | None = None
     temperature: float = 0.7
-    max_tokens: Optional[int] = None
-    top_p: Optional[float] = None
-    frequency_penalty: Optional[float] = None
-    presence_penalty: Optional[float] = None
-    stop: Optional[list[str]] = None
-    tools: Optional[list[Tool]] = None
-    tool_choice: Optional[Any] = None
+    max_tokens: int | None = None
+    top_p: float | None = None
+    frequency_penalty: float | None = None
+    presence_penalty: float | None = None
+    stop: list[str] | None = None
+    tools: list[Tool] | None = None
+    tool_choice: Any | None = None
     stream: bool = False
-    response_format: Optional[Dict[str, Any]] = None
-    extra_params: Dict[str, Any] = field(default_factory=dict)
+    response_format: dict[str, Any] | None = None
+    extra_params: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -119,16 +121,16 @@ class CompletionResponse:
     content: str
     model: str
     usage: TokenUsage
-    finish_reason: Optional[str] = None
-    tool_calls: Optional[list[dict[str, Any]]] = None
-    raw_response: Optional[Dict[str, Any]] = None
-    id: Optional[str] = None
+    finish_reason: str | None = None
+    tool_calls: list[dict[str, Any]] | None = None
+    raw_response: dict[str, Any] | None = None
+    id: str | None = None
 
 
 @dataclass
 class EmbeddingRequest:
     texts: list[str]
-    model: Optional[str] = None
+    model: str | None = None
 
 
 @dataclass
@@ -140,17 +142,17 @@ class EmbeddingResponse:
 
 @dataclass
 class ProviderConfig:
-    api_key: Optional[str] = None
-    base_url: Optional[str] = None
+    api_key: str | None = None
+    base_url: str | None = None
     timeout: float = 30.0
     max_retries: int = 3
-    default_model: Optional[str] = None
-    organization: Optional[str] = None
-    extra_headers: Optional[Dict[str, str]] = None
+    default_model: str | None = None
+    organization: str | None = None
+    extra_headers: dict[str, str] | None = None
 
 
 class BaseProvider(ABC):
-    def __init__(self, config: Optional[ProviderConfig] = None, **kwargs: Any) -> None:
+    def __init__(self, config: ProviderConfig | None = None, **kwargs: Any) -> None:
         self.config = config or ProviderConfig()
         for key, value in kwargs.items():
             if hasattr(self.config, key) and value is not None:
