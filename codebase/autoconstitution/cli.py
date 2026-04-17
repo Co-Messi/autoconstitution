@@ -1192,49 +1192,30 @@ def cai_run(
 
 
 @cai_app.command("providers")
-def cai_providers() -> None:
-    """Show which providers are currently detected."""
+def cai_providers(
+    timeout: float = typer.Option(
+        5.0, "--timeout", help="Per-provider probe timeout in seconds."
+    ),
+) -> None:
+    """Probe every provider in parallel and report which ones actually work."""
     import asyncio as _asyncio
 
-    from autoconstitution.providers.auto_detect import (
-        _ollama_available,
-        _ollama_pick_model,
+    from autoconstitution.providers.probe import any_ready, probe_all
+    from autoconstitution.ui.probe_view import (
+        render_no_provider_panel,
+        render_probe_table,
     )
 
-    async def _check() -> None:
-        table = Table(title="Provider availability")
-        table.add_column("Provider")
-        table.add_column("Status")
-        table.add_column("Detail")
+    async def _check() -> int:
+        results = await probe_all(timeout_s=timeout)
+        console.print(render_probe_table(results))
+        if not any_ready(results):
+            console.print()
+            console.print(render_no_provider_panel())
+            return 1
+        return 0
 
-        # Ollama
-        if await _ollama_available():
-            model = await _ollama_pick_model()
-            table.add_row("ollama", "[green]ready[/green]", f"model={model or '(none)'}")
-        else:
-            table.add_row("ollama", "[red]unavailable[/red]", "daemon not reachable")
-
-        # Kimi
-        if os.environ.get("MOONSHOT_API_KEY") or os.environ.get("KIMI_API_KEY"):
-            table.add_row("kimi", "[green]ready[/green]", "API key set")
-        else:
-            table.add_row("kimi", "[yellow]no key[/yellow]", "MOONSHOT_API_KEY unset")
-
-        # Anthropic
-        if os.environ.get("ANTHROPIC_API_KEY"):
-            table.add_row("anthropic", "[green]ready[/green]", "ANTHROPIC_API_KEY set")
-        else:
-            table.add_row("anthropic", "[yellow]no key[/yellow]", "ANTHROPIC_API_KEY unset")
-
-        # OpenAI
-        if os.environ.get("OPENAI_API_KEY"):
-            table.add_row("openai", "[green]ready[/green]", "OPENAI_API_KEY set")
-        else:
-            table.add_row("openai", "[yellow]no key[/yellow]", "OPENAI_API_KEY unset")
-
-        console.print(table)
-
-    _asyncio.run(_check())
+    raise typer.Exit(code=_asyncio.run(_check()))
 
 
 # ============================================================================
