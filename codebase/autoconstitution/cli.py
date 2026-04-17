@@ -1073,17 +1073,26 @@ def cai_run(
         Optional[Path],
         typer.Option("--constitution", help="Path to a custom constitution.md."),
     ] = None,
-    live: Annotated[
-        bool,
+    ui: Annotated[
+        str,
         typer.Option(
-            "--live/--no-live",
+            "--ui",
             help=(
-                "Render the live role-panel dashboard (Student/Judge) while the "
-                "loop runs. Defaults to auto: on for single-prompt TTY runs, off "
-                "for batches or piped output."
+                "Rendering mode: 'live' (Rich dashboard with role panels), "
+                "'plain' (one line per event, pipe-friendly), 'json' (JSONL "
+                "events on stdout for programmatic consumers), or 'auto' "
+                "(live when running a single prompt in a TTY, plain otherwise)."
             ),
         ),
-    ] = True,
+    ] = "auto",
+    live: Annotated[
+        Optional[bool],
+        typer.Option(
+            "--live/--no-live",
+            hidden=True,
+            help="Deprecated: use --ui=live / --ui=plain instead.",
+        ),
+    ] = None,
 ) -> None:
     """Run the Constitutional AI critique-revision loop for real.
 
@@ -1099,6 +1108,20 @@ def cai_run(
     )
     from autoconstitution.cai.preference_pairs import PreferencePairBuilder
     from autoconstitution.providers import pick_provider
+
+    # ---- Resolve UI mode -----------------------------------------------
+    ui_normalized = ui.lower().strip()
+    if ui_normalized not in ("live", "plain", "json", "auto"):
+        console.print(
+            f"[red]Invalid --ui value: {ui!r}. "
+            f"Pick one of live/plain/json/auto.[/red]"
+        )
+        raise typer.Exit(code=2)
+    # Back-compat: --live/--no-live overrides --ui when explicitly set.
+    if live is True:
+        ui_normalized = "live"
+    elif live is False:
+        ui_normalized = "plain"
 
     # ---- Collect prompts ------------------------------------------------
     prompts: List[str] = []
@@ -1141,9 +1164,23 @@ def cai_run(
         judge = JudgeAgent(provider=choice.provider, constitution_path=constitution)
         loop = CritiqueRevisionLoop(student=student, judge=judge, max_rounds=max_rounds)
 
-        use_live = live and len(prompts) == 1 and _sys.stdout.isatty()
+        # Resolve 'auto' against the actual runtime (TTY, batch vs single).
+        effective_ui = ui_normalized
+        if effective_ui == "auto":
+            effective_ui = (
+                "live"
+                if len(prompts) == 1 and _sys.stdout.isatty()
+                else "plain"
+            )
+        # 'live' only makes sense for a single prompt — downgrade with a notice.
+        if effective_ui == "live" and len(prompts) != 1:
+            console.print(
+                "[yellow]--ui=live ignored for batch runs; "
+                "falling back to plain.[/yellow]"
+            )
+            effective_ui = "plain"
 
-        if use_live:
+        if effective_ui == "live":
             from autoconstitution.ui.live import LiveRenderer
 
             renderer = LiveRenderer(console=console, max_rounds=max_rounds)
@@ -1152,23 +1189,44 @@ def cai_run(
                 results = [result]
             finally:
                 await renderer.aclose()
-        else:
-            with Progress(
-                SpinnerColumn(),
-                TextColumn("[progress.description]{task.description}"),
-                BarColumn(),
-                TaskProgressColumn(),
-                TimeElapsedColumn(),
-                console=console,
-            ) as progress:
-                task_id = progress.add_task("Critique/Revision", total=len(prompts))
+        elif effective_ui == "json":
+            from autoconstitution.ui.json_stream import JSONRenderer
 
-                async def _one(p: str):
-                    r = await loop.run(p)
-                    progress.advance(task_id)
-                    return r
+            json_renderer = JSONRenderer()
+            try:
+                results = []
+                for p in prompts:
+                    results.append(await loop.run(p, renderer=json_renderer))
+            finally:
+                await json_renderer.aclose()
+        else:  # plain
+            from autoconstitution.ui.plain import PlainRenderer
 
-                results = await _asyncio.gather(*(_one(p) for p in prompts))
+            plain_renderer = PlainRenderer()
+            try:
+                if len(prompts) == 1:
+                    results = [await loop.run(prompts[0], renderer=plain_renderer)]
+                else:
+                    with Progress(
+                        SpinnerColumn(),
+                        TextColumn("[progress.description]{task.description}"),
+                        BarColumn(),
+                        TaskProgressColumn(),
+                        TimeElapsedColumn(),
+                        console=console,
+                    ) as progress:
+                        task_id = progress.add_task(
+                            "Critique/Revision", total=len(prompts)
+                        )
+
+                        async def _one(p: str):
+                            r = await loop.run(p, renderer=plain_renderer)
+                            progress.advance(task_id)
+                            return r
+
+                        results = await _asyncio.gather(*(_one(p) for p in prompts))
+            finally:
+                await plain_renderer.aclose()
 
         # ---- Export preference pairs -----------------------------------
         builder = PreferencePairBuilder()
