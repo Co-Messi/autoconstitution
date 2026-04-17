@@ -1188,7 +1188,14 @@ def cai_run(
             )
         )
 
-    _asyncio.run(_go())
+    try:
+        _asyncio.run(_go())
+    except KeyboardInterrupt:
+        console.print("\n[yellow]Interrupted by user[/yellow]")
+        raise typer.Exit(code=130) from None
+    except Exception as exc:  # noqa: BLE001 - boundary: surface to CLI user
+        console.print(f"\n[red]✗ CAI run failed: {exc}[/red]")
+        raise typer.Exit(code=1) from exc
 
 
 @cai_app.command("providers")

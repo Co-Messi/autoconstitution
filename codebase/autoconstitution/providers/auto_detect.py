@@ -175,7 +175,16 @@ async def pick_provider(
         ollama_model: Pin a specific Ollama model; auto-detect if None.
     """
     default_order = ["ollama", "kimi", "anthropic", "openai"]
-    order = prefer + [p for p in default_order if p not in prefer] if prefer else default_order
+    if prefer:
+        unknown = [p for p in prefer if p not in default_order]
+        if unknown:
+            raise ValueError(
+                f"Unknown provider(s) in prefer list: {unknown}. "
+                f"Valid providers: {default_order}"
+            )
+        order = prefer + [p for p in default_order if p not in prefer]
+    else:
+        order = default_order
 
     errors: list[str] = []
 

@@ -32,7 +32,7 @@ from rich.console import Console, Group, RenderableType
 from rich.layout import Layout
 from rich.live import Live
 from rich.panel import Panel
-from rich.progress import BarColumn, Progress, TextColumn, TimeElapsedColumn
+from rich.progress import BarColumn, Progress, TaskID, TextColumn, TimeElapsedColumn
 from rich.table import Table
 from rich.text import Text
 
@@ -126,6 +126,8 @@ class LiveRenderer:
         self._state = _LiveState(max_rounds=max_rounds)
         self._live: Live | None = None
         self._refresh_per_second = refresh_per_second
+        self._progress: Progress | None = None
+        self._progress_task_id: TaskID = TaskID(0)
 
     # ------------------------------------------------------------------
     # Renderer protocol
@@ -133,10 +135,16 @@ class LiveRenderer:
 
     def on_event(self, event: Event) -> None:
         s = self._state
+        # Every event carries a round (or is a RoundStart carrying prompt + round).
+        # Tracking the maximum keeps the header accurate without the loop needing
+        # to emit RoundStart on every iteration.
+        event_round = getattr(event, "round", None)
+        if isinstance(event_round, int):
+            s.round = max(s.round, event_round)
+
         match event:
             case RoundStart():
                 s.prompt = event.prompt
-                s.round = event.round
                 s.error = None
                 s.converged = False
                 for panel in s.panels.values():
@@ -255,16 +263,24 @@ class LiveRenderer:
         return Group(*parts)
 
     def _progress_bar(self) -> RenderableType:
-        progress = Progress(
-            TextColumn("[progress.description]{task.description}"),
-            BarColumn(bar_width=None),
-            TimeElapsedColumn(),
-            expand=True,
-        )
+        # Build the Progress once and reuse across refreshes; re-creating it per
+        # render leaks a task entry on every tick and causes visible churn.
+        if self._progress is None:
+            self._progress = Progress(
+                TextColumn("[progress.description]{task.description}"),
+                BarColumn(bar_width=None),
+                TimeElapsedColumn(),
+                expand=True,
+            )
+            total = max(self._state.max_rounds, 1)
+            self._progress_task_id = self._progress.add_task("round", total=total)
         total = max(self._state.max_rounds, 1)
-        task = progress.add_task("round progress", total=total)
-        progress.update(task, completed=min(self._state.round, total))
-        return progress
+        self._progress.update(
+            self._progress_task_id,
+            completed=min(self._state.round, total),
+            total=total,
+        )
+        return self._progress
 
     def _render_panel(self, role: Role) -> RenderableType:
         state = self._state.panel(role)
