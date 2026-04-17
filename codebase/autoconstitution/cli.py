@@ -1073,12 +1073,24 @@ def cai_run(
         Optional[Path],
         typer.Option("--constitution", help="Path to a custom constitution.md."),
     ] = None,
+    live: Annotated[
+        bool,
+        typer.Option(
+            "--live/--no-live",
+            help=(
+                "Render the live role-panel dashboard (Student/Judge) while the "
+                "loop runs. Defaults to auto: on for single-prompt TTY runs, off "
+                "for batches or piped output."
+            ),
+        ),
+    ] = True,
 ) -> None:
     """Run the Constitutional AI critique-revision loop for real.
 
     Requires a working provider. Ollama is tried first (no key needed).
     """
     import asyncio as _asyncio
+    import sys as _sys
 
     from autoconstitution.cai import (
         CritiqueRevisionLoop,
@@ -1129,23 +1141,34 @@ def cai_run(
         judge = JudgeAgent(provider=choice.provider, constitution_path=constitution)
         loop = CritiqueRevisionLoop(student=student, judge=judge, max_rounds=max_rounds)
 
-        with Progress(
-            SpinnerColumn(),
-            TextColumn("[progress.description]{task.description}"),
-            BarColumn(),
-            TaskProgressColumn(),
-            TimeElapsedColumn(),
-            console=console,
-        ) as progress:
-            task_id = progress.add_task("Critique/Revision", total=len(prompts))
-            results = []
+        use_live = live and len(prompts) == 1 and _sys.stdout.isatty()
 
-            async def _one(p: str):
-                r = await loop.run(p)
-                progress.advance(task_id)
-                return r
+        if use_live:
+            from autoconstitution.ui.live import LiveRenderer
 
-            results = await _asyncio.gather(*(_one(p) for p in prompts))
+            renderer = LiveRenderer(console=console, max_rounds=max_rounds)
+            try:
+                result = await loop.run(prompts[0], renderer=renderer)
+                results = [result]
+            finally:
+                await renderer.aclose()
+        else:
+            with Progress(
+                SpinnerColumn(),
+                TextColumn("[progress.description]{task.description}"),
+                BarColumn(),
+                TaskProgressColumn(),
+                TimeElapsedColumn(),
+                console=console,
+            ) as progress:
+                task_id = progress.add_task("Critique/Revision", total=len(prompts))
+
+                async def _one(p: str):
+                    r = await loop.run(p)
+                    progress.advance(task_id)
+                    return r
+
+                results = await _asyncio.gather(*(_one(p) for p in prompts))
 
         # ---- Export preference pairs -----------------------------------
         builder = PreferencePairBuilder()
