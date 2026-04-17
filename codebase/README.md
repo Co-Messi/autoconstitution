@@ -4,8 +4,32 @@
 > A constitutional multi-agent improvement loop where agents propose, critique, revise, judge, and preserve better strategies under rules you edit in Markdown.
 
 [![license](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![python](https://img.shields.io/badge/python-3.9%2B-brightgreen.svg)](pyproject.toml)
+[![python](https://img.shields.io/badge/python-3.11%2B-brightgreen.svg)](pyproject.toml)
 [![status](https://img.shields.io/badge/status-beta-orange.svg)](#status)
+
+---
+
+## 60-second tour
+
+```bash
+pip install autoconstitution
+autoconstitution demo
+```
+
+That's it. `demo` probes for a provider (Ollama local, or `MOONSHOT_API_KEY` /
+`ANTHROPIC_API_KEY` / `OPENAI_API_KEY`), opens a live Rich dashboard, and runs
+a three-round critique/revision loop against a canned prompt so you can watch
+constitutional AI happen in your terminal.
+
+> _(asciinema recording lands once the full UX pass ships — placeholder for now.)_
+
+When you're ready to use it on your own prompts:
+
+```bash
+autoconstitution cai providers                     # see which providers are live
+autoconstitution cai run -p "your task here"       # single prompt, live dashboard
+autoconstitution cai run -f prompts.txt --ui json  # batch, machine-readable stream
+```
 
 ---
 
@@ -26,12 +50,6 @@ But instead of a single agent iterating alone, it uses a small society of roles:
 - **Synthesizer** preserves useful findings across rounds
 
 The rules live in `constitution.md`, so the loop is not just trial-and-error. It improves under explicit principles you can inspect, diff, and change.
-
-```bash
-pip install autoconstitution
-ollama pull llama3.1:8b           # or set ANTHROPIC_API_KEY / OPENAI_API_KEY / MOONSHOT_API_KEY
-autoconstitution cai run -p "Design a better financial-analysis workflow for earnings revisions."
-```
 
 **Output:** a structured critique/revision trace plus chosen-vs-rejected pairs that can be exported for later ratcheting or DPO-style training.
 
@@ -132,7 +150,16 @@ autoconstitution cai providers
 autoconstitution cai run -p "Explain why the sky is blue in 3 sentences."
 ```
 
-Or batch from a file:
+This opens a live Rich dashboard — role panels for Student / Judge / Meta-Judge, tokens streaming into the active panel, and a ratchet scoreboard in the footer. When stdout isn't a TTY the tool auto-degrades to line logs; override with `--ui`:
+
+| `--ui` value | When to use |
+|---|---|
+| `auto` | Default. Live dashboard on a TTY, plain logs when piped. |
+| `live` | Force the live dashboard even if stdout isn't a TTY. |
+| `plain` | One `[role round=N] text` line per event. Ideal for CI. |
+| `json` | One JSON object per event on stdout. For programmatic consumers. |
+
+Batch from a file:
 
 ```bash
 echo "Design a better financial-analysis workflow." > prompts.txt
@@ -141,7 +168,8 @@ autoconstitution cai run \
   --prompts-file prompts.txt \
   --output outputs/pairs.jsonl \
   --max-rounds 3 \
-  --concurrency 4
+  --concurrency 4 \
+  --ui plain
 ```
 
 ### 3. Export or train (optional)
