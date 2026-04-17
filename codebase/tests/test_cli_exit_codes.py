@@ -47,3 +47,17 @@ def test_help_exits_zero() -> None:
     runner = CliRunner()
     result = runner.invoke(app, ["--help"])
     assert result.exit_code == 0
+
+
+def test_demo_command_registered() -> None:
+    runner = CliRunner()
+    result = runner.invoke(app, ["--help"])
+    assert result.exit_code == 0
+    assert "demo" in result.output.lower()
+
+
+def test_demo_command_help_exits_zero() -> None:
+    runner = CliRunner()
+    result = runner.invoke(app, ["demo", "--help"])
+    assert result.exit_code == 0
+    assert "canned prompt" in result.output.lower()

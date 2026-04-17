@@ -1226,6 +1226,113 @@ def cai_providers(
 
 
 # ============================================================================
+# Demo Command — hero experience for new users
+# ============================================================================
+
+_DEMO_PROMPT = (
+    "Design a one-month remote-work onboarding plan for a senior engineer "
+    "who needs to ramp up on a large codebase without burning out. Focus on "
+    "concrete weekly objectives and measurable checkpoints."
+)
+
+
+@app.command("demo")
+def demo() -> None:
+    """Run the Constitutional AI loop on a canned prompt with zero configuration.
+
+    Detects an available provider (Ollama first, then cloud keys), renders the
+    live role-panel dashboard, and walks through three critique/revision
+    rounds. Intended as the first thing a new user runs.
+    """
+    import asyncio as _asyncio
+
+    from autoconstitution.cai import (
+        CritiqueRevisionLoop,
+        JudgeAgent,
+        StudentAgent,
+    )
+    from autoconstitution.providers import pick_provider
+    from autoconstitution.providers.probe import any_ready, probe_all
+    from autoconstitution.ui.live import LiveRenderer
+    from autoconstitution.ui.probe_view import (
+        render_no_provider_panel,
+        render_probe_table,
+    )
+
+    async def _go() -> int:
+        console.print(
+            Panel.fit(
+                Text.from_markup(
+                    "[bold]autoconstitution demo[/bold]\n"
+                    "[dim]Watching constitutional AI critique and revise itself "
+                    "in three rounds.[/dim]"
+                ),
+                border_style="cyan",
+            )
+        )
+
+        # 1. Probe providers — same widget as `cai providers` so the user learns
+        #    both commands at once.
+        probe_results = await probe_all(timeout_s=5.0)
+        console.print(render_probe_table(probe_results))
+        if not any_ready(probe_results):
+            console.print()
+            console.print(render_no_provider_panel())
+            return 1
+
+        # 2. Pick a provider. pick_provider() knows how to wire the adapter.
+        choice = await pick_provider()
+        console.print(
+            f"\n[green]✓ Provider ready:[/green] {choice.name} "
+            f"[dim]({choice.model} — {choice.reason})[/dim]"
+        )
+        console.print(f"\n[bold]Prompt:[/bold] {_DEMO_PROMPT}\n")
+
+        # 3. Spin up Student + Judge and run the loop with the live dashboard.
+        student = StudentAgent(provider=choice.provider)
+        judge = JudgeAgent(provider=choice.provider)
+        loop = CritiqueRevisionLoop(student=student, judge=judge, max_rounds=3)
+
+        renderer = LiveRenderer(console=console, max_rounds=3)
+        try:
+            result = await loop.run(_DEMO_PROMPT, renderer=renderer)
+        finally:
+            await renderer.aclose()
+
+        # 4. Summary + nudge toward real usage.
+        converged_note = (
+            "[green]✓ Judge signed off on the revision[/green]"
+            if result.converged
+            else "[yellow]⚠ Still critiques outstanding — would benefit from "
+            "more rounds[/yellow]"
+        )
+        console.print(
+            Panel.fit(
+                f"{converged_note}\n"
+                f"Rounds used: {result.rounds_used}\n"
+                f"Critiques collected: {len(result.critiques)}\n\n"
+                "[bold]Next:[/bold]\n"
+                "  autoconstitution cai run --prompt \"your task here\"\n"
+                "  autoconstitution cai run --prompts-file prompts.txt -o pairs.jsonl",
+                title="demo complete",
+                border_style="green",
+            )
+        )
+        return 0
+
+    try:
+        raise typer.Exit(code=_asyncio.run(_go()))
+    except KeyboardInterrupt:
+        console.print("\n[yellow]Interrupted by user[/yellow]")
+        raise typer.Exit(code=130) from None
+    except typer.Exit:
+        raise
+    except Exception as exc:  # noqa: BLE001 - boundary: surface to CLI user
+        console.print(f"\n[red]✗ Demo failed: {exc}[/red]")
+        raise typer.Exit(code=1) from exc
+
+
+# ============================================================================
 # Main Entry Point
 # ============================================================================
 
