@@ -22,9 +22,10 @@ Example:
 from __future__ import annotations
 
 import enum
+from collections.abc import AsyncIterator
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Optional, Protocol
+from typing import Any, Protocol
 
 
 class CAIRole(str, enum.Enum):
@@ -41,11 +42,26 @@ class LLMProvider(Protocol):
     async def complete(
         self,
         prompt: str,
-        system: Optional[str] = None,
+        system: str | None = None,
         temperature: float = 0.7,
         max_tokens: int = 2048,
     ) -> str:
         """Return the model's completion for ``prompt`` given an optional system prompt."""
+        ...
+
+    def stream(
+        self,
+        prompt: str,
+        system: str | None = None,
+        temperature: float = 0.7,
+        max_tokens: int = 2048,
+    ) -> AsyncIterator[str]:
+        """Yield text chunks as the model produces them.
+
+        Callers that want whole-message output should prefer :meth:`complete`.
+        Renderers that want per-token animation iterate this. Implementations
+        that can't stream natively may yield the whole response as one chunk.
+        """
         ...
 
 
@@ -144,7 +160,7 @@ class _AgentBase:
         )
 
 
-def _load_constitution(constitution_path: Optional[Path] = None) -> str:
+def _load_constitution(constitution_path: Path | None = None) -> str:
     """Load the constitution markdown. Falls back to a minimal embedded default.
 
     This avoids a hard dependency on an installed `constitution.md`, which matters
@@ -181,7 +197,7 @@ class StudentAgent(_AgentBase):
         *,
         temperature: float = 0.7,
         max_tokens: int = 2048,
-        system_override: Optional[str] = None,
+        system_override: str | None = None,
     ) -> None:
         super().__init__(
             provider=provider,
@@ -215,7 +231,7 @@ class JudgeAgent(_AgentBase):
         self,
         provider: LLMProvider,
         *,
-        constitution_path: Optional[Path] = None,
+        constitution_path: Path | None = None,
         temperature: float = 0.2,  # judges should be low-variance
         max_tokens: int = 2048,
     ) -> None:
@@ -246,7 +262,7 @@ class MetaJudgeAgent(_AgentBase):
         self,
         provider: LLMProvider,
         *,
-        constitution_path: Optional[Path] = None,
+        constitution_path: Path | None = None,
         temperature: float = 0.1,
         max_tokens: int = 4096,
     ) -> None:
