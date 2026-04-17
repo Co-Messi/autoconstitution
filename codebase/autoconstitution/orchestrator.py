@@ -672,32 +672,36 @@ class PerformanceMonitor:
         async with self._lock:
             return self._agent_metrics.copy()
     
+    def _identify_bottlenecks_locked(self) -> list[dict[str, Any]]:
+        """Identify performance bottlenecks. Caller must hold self._lock."""
+        bottlenecks: list[dict[str, Any]] = []
+
+        # Find branches with low success rates
+        for branch_id, metrics in self._branch_metrics.items():
+            if metrics.success_rate < 0.5 and metrics.task_count > 5:
+                bottlenecks.append({
+                    "type": "low_success_rate",
+                    "branch_id": branch_id,
+                    "success_rate": metrics.success_rate,
+                    "severity": "high" if metrics.success_rate < 0.3 else "medium",
+                })
+
+        # Find agents with low efficiency
+        for agent_id, metrics in self._agent_metrics.items():
+            if metrics.efficiency_score < 0.3 and metrics.tasks_completed > 5:
+                bottlenecks.append({
+                    "type": "low_agent_efficiency",
+                    "agent_id": agent_id,
+                    "efficiency": metrics.efficiency_score,
+                    "severity": "medium",
+                })
+
+        return bottlenecks
+
     async def identify_bottlenecks(self) -> list[dict[str, Any]]:
         """Identify performance bottlenecks."""
         async with self._lock:
-            bottlenecks = []
-            
-            # Find branches with low success rates
-            for branch_id, metrics in self._branch_metrics.items():
-                if metrics.success_rate < 0.5 and metrics.task_count > 5:
-                    bottlenecks.append({
-                        "type": "low_success_rate",
-                        "branch_id": branch_id,
-                        "success_rate": metrics.success_rate,
-                        "severity": "high" if metrics.success_rate < 0.3 else "medium",
-                    })
-            
-            # Find agents with low efficiency
-            for agent_id, metrics in self._agent_metrics.items():
-                if metrics.efficiency_score < 0.3 and metrics.tasks_completed > 5:
-                    bottlenecks.append({
-                        "type": "low_agent_efficiency",
-                        "agent_id": agent_id,
-                        "efficiency": metrics.efficiency_score,
-                        "severity": "medium",
-                    })
-            
-            return bottlenecks
+            return self._identify_bottlenecks_locked()
     
     async def _check_alerts(self, task: TaskNode, success: bool) -> None:
         """Check for alert conditions."""
@@ -737,14 +741,14 @@ class PerformanceMonitor:
         async with self._lock:
             total_tasks = len(self._task_history)
             successful_tasks = sum(1 for _, _, _, s in self._task_history if s)
-            
+
             return {
                 "total_tasks": total_tasks,
                 "successful_tasks": successful_tasks,
                 "overall_success_rate": successful_tasks / total_tasks if total_tasks > 0 else 0,
                 "active_branches": len(self._branch_metrics),
                 "active_agents": len(self._agent_metrics),
-                "bottlenecks": await self.identify_bottlenecks(),
+                "bottlenecks": self._identify_bottlenecks_locked(),
             }
 
 
@@ -780,6 +784,33 @@ class AgentPoolManager:
         self._lock = asyncio.Lock()
         self._reallocation_history: list[dict[str, Any]] = []
     
+    def _spawn_agent_locked(
+        self,
+        branch_id: BranchID,
+        name: Optional[str] = None,
+        capabilities: Optional[set[str]] = None,
+    ) -> SubAgent:
+        """Spawn a sub-agent. Caller must hold self._lock."""
+        if len(self._agents) >= self._max_agents:
+            raise AgentError(f"Maximum agent limit ({self._max_agents}) reached")
+
+        agent_id = f"agent_{uuid.uuid4().hex[:8]}"
+        agent = SubAgent(
+            agent_id=agent_id,
+            branch_id=branch_id,
+            name=name or f"Agent-{agent_id[-4:]}",
+            capabilities=capabilities or set(),
+        )
+
+        self._agents[agent_id] = agent
+        self._branch_agents[branch_id].add(agent_id)
+
+        for cap in agent.capabilities:
+            self._capability_index[cap].add(agent_id)
+
+        logger.info(f"Spawned agent {agent_id} for branch {branch_id}")
+        return agent
+
     async def spawn_agent(
         self,
         branch_id: BranchID,
@@ -788,50 +819,36 @@ class AgentPoolManager:
     ) -> SubAgent:
         """Spawn a new sub-agent."""
         async with self._lock:
-            if len(self._agents) >= self._max_agents:
-                raise AgentError(f"Maximum agent limit ({self._max_agents}) reached")
-            
-            agent_id = f"agent_{uuid.uuid4().hex[:8]}"
-            agent = SubAgent(
-                agent_id=agent_id,
-                branch_id=branch_id,
-                name=name or f"Agent-{agent_id[-4:]}",
-                capabilities=capabilities or set(),
-            )
-            
-            self._agents[agent_id] = agent
-            self._branch_agents[branch_id].add(agent_id)
-            
-            for cap in agent.capabilities:
-                self._capability_index[cap].add(agent_id)
-            
-            logger.info(f"Spawned agent {agent_id} for branch {branch_id}")
-            return agent
-    
+            return self._spawn_agent_locked(branch_id, name, capabilities)
+
+    def _terminate_agent_locked(self, agent_id: AgentID, force: bool = False) -> bool:
+        """Terminate a sub-agent. Caller must hold self._lock."""
+        agent = self._agents.get(agent_id)
+        if not agent:
+            return False
+
+        if agent.status == AgentStatus.BUSY and not force:
+            logger.warning(f"Agent {agent_id} is busy, cannot terminate without force")
+            return False
+
+        # Cancel agent operations
+        agent.cancel()
+        agent.status = AgentStatus.TERMINATED
+
+        # Remove from indices
+        del self._agents[agent_id]
+        self._branch_agents[agent.branch_id].discard(agent_id)
+
+        for cap in agent.capabilities:
+            self._capability_index[cap].discard(agent_id)
+
+        logger.info(f"Terminated agent {agent_id}")
+        return True
+
     async def terminate_agent(self, agent_id: AgentID, force: bool = False) -> bool:
         """Terminate a sub-agent."""
         async with self._lock:
-            agent = self._agents.get(agent_id)
-            if not agent:
-                return False
-            
-            if agent.status == AgentStatus.BUSY and not force:
-                logger.warning(f"Agent {agent_id} is busy, cannot terminate without force")
-                return False
-            
-            # Cancel agent operations
-            agent.cancel()
-            agent.status = AgentStatus.TERMINATED
-            
-            # Remove from indices
-            del self._agents[agent_id]
-            self._branch_agents[agent.branch_id].discard(agent_id)
-            
-            for cap in agent.capabilities:
-                self._capability_index[cap].discard(agent_id)
-            
-            logger.info(f"Terminated agent {agent_id}")
-            return True
+            return self._terminate_agent_locked(agent_id, force)
     
     async def get_agent(self, agent_id: AgentID) -> Optional[SubAgent]:
         """Get an agent by ID."""
@@ -913,44 +930,40 @@ class AgentPoolManager:
     async def auto_scale(self, branch_loads: dict[BranchID, float]) -> dict[str, Any]:
         """Automatically scale agents based on branch loads."""
         async with self._lock:
-            actions = {
+            actions: dict[str, list[AgentID]] = {
                 "spawned": [],
                 "terminated": [],
                 "reallocated": [],
             }
-            
+
             # Identify overloaded branches
             for branch_id, load in branch_loads.items():
-                if load > self._spawn_threshold:
-                    # Spawn new agent
-                    if len(self._agents) < self._max_agents:
-                        agent = await self.spawn_agent(branch_id)
-                        actions["spawned"].append(agent.agent_id)
-            
+                if load > self._spawn_threshold and len(self._agents) < self._max_agents:
+                    agent = self._spawn_agent_locked(branch_id)
+                    actions["spawned"].append(agent.agent_id)
+
             # Identify underutilized agents
             idle_agents = [
                 agent for agent in self._agents.values()
                 if agent.status == AgentStatus.IDLE
             ]
-            
+
             # Terminate excess idle agents
             excess = len(self._agents) - self._min_agents
-            for agent in sorted(
-                idle_agents,
-                key=lambda a: a.metrics.last_heartbeat
-            ):
+            for agent in sorted(idle_agents, key=lambda a: a.metrics.last_heartbeat):
                 if excess <= 0:
                     break
-                
+
                 idle_time = (datetime.now() - agent.metrics.last_heartbeat).total_seconds()
-                if idle_time > self._idle_timeout_sec:
-                    if await self.terminate_agent(agent.agent_id):
-                        actions["terminated"].append(agent.agent_id)
-                        excess -= 1
-            
+                if idle_time > self._idle_timeout_sec and self._terminate_agent_locked(
+                    agent.agent_id
+                ):
+                    actions["terminated"].append(agent.agent_id)
+                    excess -= 1
+
             # Reallocate from low-priority to high-priority branches
             # (Would need branch priorities passed in)
-            
+
             return actions
     
     async def get_stats(self) -> dict[str, Any]:
@@ -1197,6 +1210,43 @@ class SwarmOrchestrator:
         async with self._branch_lock:
             return list(self._branches.values())
     
+    async def _delete_branch_locked(
+        self,
+        branch_id: BranchID,
+        cascade: bool = False,
+    ) -> bool:
+        """Delete a research branch. Caller must hold self._branch_lock."""
+        branch = self._branches.get(branch_id)
+        if not branch:
+            return False
+
+        # Check for child branches
+        if branch.child_branches and not cascade:
+            raise BranchError(
+                f"Branch {branch_id} has child branches, use cascade=True"
+            )
+
+        # Delete child branches if cascading
+        if cascade:
+            for child_id in list(branch.child_branches):
+                await self._delete_branch_locked(child_id, cascade=True)
+
+        # Remove from parent
+        if branch.parent_branch and branch.parent_branch in self._branches:
+            self._branches[branch.parent_branch].child_branches.discard(branch_id)
+
+        # Terminate branch agents (agent_pool has its own lock; no deadlock risk)
+        for agent_id in list(branch.agent_ids):
+            await self._agent_pool.terminate_agent(agent_id, force=True)
+
+        # Remove branch tasks from DAG (DAG has its own lock; no deadlock risk)
+        for task_id in list(branch.task_ids):
+            await self._dag.remove_task(task_id)
+
+        del self._branches[branch_id]
+        logger.info(f"Deleted branch {branch_id}")
+        return True
+
     async def delete_branch(
         self,
         branch_id: BranchID,
@@ -1204,45 +1254,16 @@ class SwarmOrchestrator:
     ) -> bool:
         """
         Delete a research branch.
-        
+
         Args:
             branch_id: Branch to delete
             cascade: Also delete child branches
-        
+
         Returns:
             True if deleted, False if not found
         """
         async with self._branch_lock:
-            branch = self._branches.get(branch_id)
-            if not branch:
-                return False
-            
-            # Check for child branches
-            if branch.child_branches and not cascade:
-                raise BranchError(
-                    f"Branch {branch_id} has child branches, use cascade=True"
-                )
-            
-            # Delete child branches if cascading
-            if cascade:
-                for child_id in list(branch.child_branches):
-                    await self.delete_branch(child_id, cascade=True)
-            
-            # Remove from parent
-            if branch.parent_branch and branch.parent_branch in self._branches:
-                self._branches[branch.parent_branch].child_branches.discard(branch_id)
-            
-            # Terminate branch agents
-            for agent_id in list(branch.agent_ids):
-                await self._agent_pool.terminate_agent(agent_id, force=True)
-            
-            # Remove branch tasks from DAG
-            for task_id in list(branch.task_ids):
-                await self._dag.remove_task(task_id)
-            
-            del self._branches[branch_id]
-            logger.info(f"Deleted branch {branch_id}")
-            return True
+            return await self._delete_branch_locked(branch_id, cascade)
     
     # ========================================================================
     # Task Management

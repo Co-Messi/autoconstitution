@@ -149,8 +149,14 @@ class TokenBucketRateLimiter:
     
     def _refill_tokens(self, agent_id: AgentId) -> None:
         """Refill tokens for an agent based on elapsed time."""
+        # Avoid the defaultdict(time.time) race: its lazy-init calls time.time()
+        # *after* `now = time.time()` above runs, producing negative elapsed that
+        # drains an otherwise-full bucket. Touch _last_refill first so any
+        # auto-init completes before we measure.
+        if agent_id not in self._last_refill:
+            self._last_refill[agent_id] = time.time()
         now = time.time()
-        elapsed = now - self._last_refill[agent_id]
+        elapsed = max(0.0, now - self._last_refill[agent_id])
         tokens_to_add = (elapsed / self._refill_period) * self._refill_rate
         self._tokens[agent_id] = min(self._max_tokens, self._tokens[agent_id] + tokens_to_add)
         self._last_refill[agent_id] = now
