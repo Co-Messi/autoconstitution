@@ -79,14 +79,26 @@ _NARROW_THRESHOLD = 120
 
 @dataclass
 class _RolePanelState:
-    """Per-role scratch state that feeds the renderer."""
+    """Per-role scratch state that feeds the renderer.
 
-    buffer: str = ""
+    Streamed chunks are appended to ``buffer_chunks`` instead of concatenated
+    into a single ``str`` — repeated ``buffer += chunk`` is O(n²) in Python
+    for long outputs. ``body`` joins once per render, which is O(n).
+    """
+
+    buffer_chunks: list[str] = field(default_factory=list)
     output: str | None = None
     last_activity: float = 0.0
 
+    @property
+    def body(self) -> str:
+        """The current content to display — finished output or live chunks."""
+        if self.output is not None:
+            return self.output
+        return "".join(self.buffer_chunks)
+
     def reset(self) -> None:
-        self.buffer = ""
+        self.buffer_chunks = []
         self.output = None
         self.last_activity = time.monotonic()
 
@@ -153,17 +165,16 @@ class LiveRenderer:
             case RoleStart():
                 s.active_role = event.role
                 panel = s.panel(event.role)
-                panel.buffer = ""
+                panel.buffer_chunks = []
                 panel.output = None
                 panel.last_activity = time.monotonic()
             case Token():
                 panel = s.panel(event.role)
-                panel.buffer += event.text
+                panel.buffer_chunks.append(event.text)
                 panel.last_activity = time.monotonic()
             case RoleEnd():
                 panel = s.panel(event.role)
                 panel.output = event.output
-                panel.buffer = event.output
                 panel.last_activity = time.monotonic()
             case Critique():
                 # Surface verdict in the judge panel header via state; no direct change.
@@ -288,7 +299,7 @@ class LiveRenderer:
         title = _ROLE_TITLE.get(role, role.title())
         is_active = self._state.active_role == role
         border = f"bold {color}" if is_active else "dim"
-        body = state.output if state.output is not None else state.buffer
+        body = state.body
         if not body:
             body_renderable: RenderableType = Text("(waiting…)", style="dim")
         else:

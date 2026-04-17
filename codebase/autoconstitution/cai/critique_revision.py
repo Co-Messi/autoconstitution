@@ -29,7 +29,7 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
-from collections.abc import AsyncIterator, Callable
+from collections.abc import AsyncIterator, Awaitable, Callable
 from dataclasses import dataclass, field
 from typing import Any, Literal
 
@@ -330,7 +330,7 @@ async def _run_role(
     role: Role,
     round_num: int,
     streaming: bool,
-    complete: Callable[[], Any],
+    complete: Callable[[], Awaitable[str]],
     stream: Callable[[], AsyncIterator[str]],
 ) -> str:
     """Run one role's turn. Emits RoleStart, per-token events (if streaming),
