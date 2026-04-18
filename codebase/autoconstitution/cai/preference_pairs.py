@@ -64,6 +64,18 @@ class PreferencePair:
         return abs(len(self.chosen) - len(self.rejected))
 
 
+def _ended_in_parse_error(result: RevisionResult) -> bool:
+    """True if the final judge verdict was parse_error.
+
+    CAI can't produce a trustworthy preference pair when the last signal was
+    garbage — the Student was told to revise off a failed-to-parse critique
+    and the chosen/rejected labels are noise.
+    """
+    if not result.critiques:
+        return False
+    return result.critiques[-1].verdict == "parse_error"
+
+
 class PreferencePairBuilder:
     """Collect, filter, and export preference pairs for DPO training."""
 
@@ -72,10 +84,17 @@ class PreferencePairBuilder:
         *,
         min_edit_distance: int = 5,
         drop_non_converged: bool = False,
+        min_critique_items: int = 1,
+        drop_parse_error_traces: bool = True,
         seed: int = 42,
     ) -> None:
         self.min_edit_distance = min_edit_distance
         self.drop_non_converged = drop_non_converged
+        # Critique-quality gates — protect against DPO training on noise when
+        # the judge returned needs_revision with no actionable items, or the
+        # trace ended in parse_error (revision was forced without signal).
+        self.min_critique_items = min_critique_items
+        self.drop_parse_error_traces = drop_parse_error_traces
         self._rng = random.Random(seed)
         self._pairs: list[PreferencePair] = []
 
@@ -83,9 +102,18 @@ class PreferencePairBuilder:
 
     def add_results(self, results: Iterable[RevisionResult]) -> int:
         """Convert CAI revision traces to preference pairs. Returns count added."""
+        results_list = list(results)
         added = 0
-        for r in results:
+        for r in results_list:
             if self.drop_non_converged and not r.converged:
+                continue
+            if self.drop_parse_error_traces and _ended_in_parse_error(r):
+                continue
+            total_items = sum(len(c.critiques) for c in r.critiques)
+            # A trace with revisions but no concrete critique items means the
+            # Student was asked to "fix" the answer with no pointer to what
+            # was wrong — the result is a random walk, not a preference signal.
+            if r.rounds_used > 0 and total_items < self.min_critique_items:
                 continue
             pair = PreferencePair(
                 prompt=r.prompt,
@@ -95,13 +123,13 @@ class PreferencePairBuilder:
                 metadata={
                     "rounds_used": r.rounds_used,
                     "converged": r.converged,
-                    "num_critiques": len(r.critiques),
+                    "num_critiques": total_items,
                 },
             )
             if self._accept(pair):
                 self._pairs.append(pair)
                 added += 1
-        logger.info("added %d pairs from %d results", added, len(list(results)))
+        logger.info("added %d pairs from %d results", added, len(results_list))
         return added
 
     def add_anchor(

@@ -201,25 +201,29 @@ class CritiqueRevisionLoop:
             )
             critique = CritiqueResult.from_judge_output(round_num, raw_critique)
             critiques.append(critique)
+            norm_verdict = _normalize_verdict(critique.verdict)
             emit(
                 Critique(
                     round=round_num,
-                    verdict=_normalize_verdict(critique.verdict),
+                    verdict=norm_verdict,
                     critique_count=len(critique.critiques),
                     raw=raw_critique,
                 )
             )
 
-            if critique.verdict == "compliant":
+            if norm_verdict == "compliant":
                 converged = True
                 logger.info("converged after %d rounds", round_num)
                 emit(RoundEnd(round=round_num, converged=True))
                 break
 
-            if critique.verdict == "parse_error":
-                logger.warning("judge output failed to parse on round %d", round_num)
+            if norm_verdict == "parse_error":
+                # Don't abandon the case on one bad JSON — small judges often
+                # recover on retry. Retry the judge next round against the same
+                # answer; max_rounds still bounds total work.
+                logger.warning("judge output failed to parse on round %d; retrying", round_num)
                 emit(RoundEnd(round=round_num, converged=False))
-                break
+                continue
 
             # Ask Student to revise given critiques.
             critique_text = self._format_critiques(critique.critiques)
@@ -384,9 +388,15 @@ def _noop_emit(event: Event) -> None:  # noqa: ARG001 - sink interface
 def _normalize_verdict(
     verdict: str,
 ) -> Literal["compliant", "needs_revision", "parse_error"]:
-    """Coerce arbitrary verdict strings into the three expected values."""
-    if verdict == "compliant":
+    """Coerce arbitrary verdict strings into the three expected values.
+
+    Local judges emit casing/spacing variants ("Compliant", "needs revision",
+    "needs-revision"); normalize before comparing so we don't silently drop
+    valid verdicts as parse_error.
+    """
+    key = verdict.strip().lower().replace(" ", "_").replace("-", "_")
+    if key == "compliant":
         return "compliant"
-    if verdict == "needs_revision":
+    if key == "needs_revision":
         return "needs_revision"
     return "parse_error"

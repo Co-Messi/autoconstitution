@@ -165,15 +165,33 @@ class TestRunHitsMaxRounds:
 
 class TestParseErrors:
     @pytest.mark.asyncio
-    async def test_parse_error_halts_loop(self) -> None:
+    async def test_parse_error_retries_judge_next_round(self) -> None:
+        # parse_error no longer aborts — the judge gets another shot next round.
+        # Here the second judge response is valid and says 'compliant', so the
+        # loop converges without the Student ever revising.
         loop, _, _ = _make_loop(
             student_responses=["answer"],
-            judge_responses=["not valid json and no braces either"],
+            judge_responses=[
+                "not valid json and no braces either",
+                '{"verdict": "compliant", "critiques": []}',
+            ],
+        )
+        result = await loop.run("prompt")
+        assert result.converged is True
+        assert len(result.critiques) == 2
+        assert result.critiques[0].verdict == "parse_error"
+        assert result.critiques[1].verdict == "compliant"
+
+    @pytest.mark.asyncio
+    async def test_parse_error_exhausts_rounds_if_judge_never_recovers(self) -> None:
+        loop, _, _ = _make_loop(
+            student_responses=["answer"],
+            judge_responses=["garbage"] * 3,
         )
         result = await loop.run("prompt")
         assert result.converged is False
-        assert len(result.critiques) == 1
-        assert result.critiques[0].verdict == "parse_error"
+        assert result.rounds_used == 3
+        assert all(c.verdict == "parse_error" for c in result.critiques)
 
     @pytest.mark.asyncio
     async def test_markdown_fenced_json_parses(self) -> None:
@@ -183,6 +201,44 @@ class TestParseErrors:
         )
         result = await loop.run("prompt")
         assert result.converged is True
+
+
+class TestVerdictNormalization:
+    """Local judges emit casing/spacing variants — make sure the loop still
+    converges on 'Compliant', 'needs revision', 'Needs-Revision', etc.
+    """
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize(
+        "raw_verdict",
+        ["Compliant", "COMPLIANT", "  compliant  ", "compliant"],
+    )
+    async def test_compliant_casing_variants_converge(self, raw_verdict: str) -> None:
+        loop, _, _ = _make_loop(
+            student_responses=["answer"],
+            judge_responses=[f'{{"verdict": "{raw_verdict}", "critiques": []}}'],
+        )
+        result = await loop.run("prompt")
+        assert result.converged is True
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize(
+        "raw_verdict",
+        ["Needs_Revision", "needs revision", "needs-revision", "NEEDS_REVISION"],
+    )
+    async def test_needs_revision_casing_variants_trigger_revision(
+        self, raw_verdict: str
+    ) -> None:
+        loop, _, _ = _make_loop(
+            student_responses=["v0", "v1"],
+            judge_responses=[
+                f'{{"verdict": "{raw_verdict}", "critiques": []}}',
+                '{"verdict": "compliant", "critiques": []}',
+            ],
+        )
+        result = await loop.run("prompt")
+        assert result.converged is True
+        assert result.final_answer == "v1"
 
 
 class TestIdenticalRevision:
