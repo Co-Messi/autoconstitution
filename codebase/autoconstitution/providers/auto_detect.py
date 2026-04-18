@@ -52,6 +52,15 @@ class _OllamaAdapter:
     def __init__(self, provider: Any, model: str) -> None:
         self._provider = provider
         self._model = model
+        self._initialized = False
+
+    async def _ensure_initialized(self) -> None:
+        # BaseProvider requires an explicit initialize(); the CAI-loop and
+        # bench pathways that consume only the adapter shouldn't have to
+        # know that, so we lazy-init on first use.
+        if not self._initialized:
+            await self._provider.initialize()
+            self._initialized = True
 
     def _build_request(
         self, prompt: str, system: str | None, temperature: float, max_tokens: int
@@ -80,6 +89,7 @@ class _OllamaAdapter:
         temperature: float = 0.7,
         max_tokens: int = 2048,
     ) -> str:
+        await self._ensure_initialized()
         req = self._build_request(prompt, system, temperature, max_tokens)
         resp = await self._provider.complete(req)
         return resp.content  # type: ignore[no-any-return]
@@ -91,6 +101,7 @@ class _OllamaAdapter:
         temperature: float = 0.7,
         max_tokens: int = 2048,
     ) -> AsyncIterator[str]:
+        await self._ensure_initialized()
         req = self._build_request(prompt, system, temperature, max_tokens)
         async for chunk in self._provider.complete_stream(req):
             text = getattr(chunk, "content", "")

@@ -1644,6 +1644,18 @@ def bench(
             ),
         ),
     ] = None,
+    critique_mode: Annotated[
+        str,
+        typer.Option(
+            "--critique-mode",
+            help=(
+                "Revision loop flavour. 'judge' (default): Student ↔ Judge CAI "
+                "loop. 'tests': feed failing pytest output directly into the "
+                "Student's revision prompt — no Judge, ground truth critique. "
+                "Only valid with --scorer coding."
+            ),
+        ),
+    ] = "judge",
 ) -> None:
     """Benchmark the CAI loop: baseline (Student alone) vs full critique/revise.
 
@@ -1681,6 +1693,20 @@ def bench(
         console.print(
             f"[red]unknown scorer {scorer_name!r}. "
             f"available: {sorted(SCORERS)}[/red]"
+        )
+        raise typer.Exit(code=2)
+
+    # ---- Validate critique mode ----------------------------------------
+    if critique_mode not in ("judge", "tests"):
+        console.print(
+            f"[red]unknown --critique-mode {critique_mode!r}. "
+            f"valid: judge, tests[/red]"
+        )
+        raise typer.Exit(code=2)
+    if critique_mode == "tests" and scorer_name != "coding":
+        console.print(
+            "[red]--critique-mode tests only works with --scorer coding "
+            "(test output is the critique).[/red]"
         )
         raise typer.Exit(code=2)
 
@@ -1746,7 +1772,23 @@ def bench(
                     progress.update(task_id, description="done")
 
             try:
-                report = await run_benchmark(cases, scorer, loop, on_event=_sink)
+                if critique_mode == "tests":
+                    # Test-driven revision loop — Student sees actual pytest
+                    # failures instead of a Judge's opinion. No Judge LLM in
+                    # the loop; hidden tests are the critique.
+                    from autoconstitution.benchmark.tdd_loop import (
+                        run_tdd_benchmark,
+                    )
+                    report = await run_tdd_benchmark(
+                        cases,
+                        student_choice.provider,
+                        max_rounds=rounds,
+                        on_event=_sink,
+                    )
+                else:
+                    report = await run_benchmark(
+                        cases, scorer, loop, on_event=_sink
+                    )
             finally:
                 await scorer.close()
 
