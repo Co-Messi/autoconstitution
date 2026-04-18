@@ -15,7 +15,7 @@ import time
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Union
 
 import typer
 import yaml
@@ -1429,7 +1429,7 @@ _CODING_SAFETY_BANNER = (
 )
 
 
-def _load_dataset(path: Path) -> list["BenchCaseShim"]:
+def _load_dataset(path: Path) -> "list[_BenchCase]":
     """Read a benchmark JSONL dataset into ``BenchCase`` objects."""
     from autoconstitution.benchmark import BenchCase
 
@@ -1463,8 +1463,8 @@ def _load_dataset(path: Path) -> list["BenchCaseShim"]:
     return cases
 
 
-# Forward reference: runtime imports BenchCase lazily to keep CLI start-up fast.
-BenchCaseShim = Any  # noqa: PYI050  - documented as opaque to CLI callers
+if TYPE_CHECKING:
+    from autoconstitution.benchmark import BenchCase as _BenchCase
 
 
 @app.command("bench")
@@ -1513,6 +1513,16 @@ def bench(
     provider_name: Annotated[
         Optional[str],
         typer.Option("--provider", help="Force a provider for the CAI loop."),
+    ] = None,
+    max_rows: Annotated[
+        Optional[int],
+        typer.Option(
+            "--max-rows",
+            help=(
+                "Clip the per-case table to N rows (best + worst halves). "
+                "Default: show every row."
+            ),
+        ),
     ] = None,
 ) -> None:
     """Benchmark the CAI loop: baseline (Student alone) vs full critique/revise.
@@ -1620,7 +1630,7 @@ def bench(
 
         # ---- Render -----------------------------------------------------
         console.print()
-        console.print(render_report_table(report, max_rows=20))
+        console.print(render_report_table(report, max_rows=max_rows))
         console.print(render_report_summary(report))
 
         # ---- Exit code --------------------------------------------------
