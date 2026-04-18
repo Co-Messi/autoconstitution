@@ -22,9 +22,10 @@ from __future__ import annotations
 import json
 import logging
 import random
+from collections.abc import Iterable
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Iterable, Optional
+from typing import Any
 
 from autoconstitution.cai.critique_revision import RevisionResult
 
@@ -88,11 +89,26 @@ class PreferencePairBuilder:
         drop_parse_error_traces: bool = True,
         seed: int = 42,
     ) -> None:
+        """Configure the gates.
+
+        Args:
+            min_edit_distance: Minimum length delta between chosen and rejected
+                answers; pairs that differ by less are treated as trivial.
+            drop_non_converged: Drop traces where the judge never said
+                compliant. Off by default — non-converged traces still carry
+                signal if the judge produced concrete critiques.
+            min_critique_items: Minimum total critique items across all rounds
+                required for a trace that performed at least one revision.
+                Guards against the judge saying needs_revision with an empty
+                critiques list (Student revises blind → noise pair). Set to
+                ``0`` as an escape hatch for verdict-only graders that don't
+                articulate items.
+            drop_parse_error_traces: Drop traces whose final verdict was
+                parse_error (the Student revised off an unparseable critique).
+            seed: RNG seed for reproducible shuffling.
+        """
         self.min_edit_distance = min_edit_distance
         self.drop_non_converged = drop_non_converged
-        # Critique-quality gates — protect against DPO training on noise when
-        # the judge returned needs_revision with no actionable items, or the
-        # trace ended in parse_error (revision was forced without signal).
         self.min_critique_items = min_critique_items
         self.drop_parse_error_traces = drop_parse_error_traces
         self._rng = random.Random(seed)
@@ -164,9 +180,7 @@ class PreferencePairBuilder:
     def _accept(self, pair: PreferencePair) -> bool:
         if pair.is_trivial:
             return False
-        if pair.edit_distance() < self.min_edit_distance:
-            return False
-        return True
+        return pair.edit_distance() >= self.min_edit_distance
 
     # -- Splitting ---------------------------------------------------------
 

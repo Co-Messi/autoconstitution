@@ -27,6 +27,7 @@ import tempfile
 import time
 from collections.abc import Callable
 from pathlib import Path
+from typing import Protocol
 
 from autoconstitution.benchmark.events import (
     BenchCaseEnd,
@@ -55,7 +56,7 @@ logger = logging.getLogger(__name__)
 BenchEventSink = Callable[[BenchEvent], None]
 
 
-class _StudentProvider:
+class _StudentProvider(Protocol):
     """Structural shape the TDD loop needs from an ``LLMProvider``."""
 
     async def complete(
@@ -124,6 +125,10 @@ async def run_tdd_benchmark(
         current_fail = baseline_fail
         rounds_used = 1
         converged = current_score.score >= 1.0
+        # Track failure signatures we've already seen — prevents oscillation
+        # between two equally-broken solutions (A→B→A→B) from burning the
+        # rounds budget. A repeat signature isn't progress, it's a cycle.
+        seen_failures: set[str] = {current_fail}
 
         for round_num in range(1, max_rounds + 1):
             if current_score.score >= 1.0:
@@ -141,18 +146,21 @@ async def run_tdd_benchmark(
             )
             rounds_used = round_num + 1
             score_up = revised_score.score > current_score.score
-            # Lateral progress: same score, different failure signature. The
-            # Student has moved past the old bug — refresh the prompt with the
-            # new failure so it doesn't keep re-solving the same equation.
+            # Lateral progress: same score, a NEW failure signature (not one
+            # we've cycled through before). The Student has moved past the
+            # old bug — refresh the prompt so it doesn't keep re-solving the
+            # same equation.
             lateral = (
                 revised_score.score == current_score.score
                 and revised_fail != current_fail
                 and revised_fail != ""
+                and revised_fail not in seen_failures
             )
             if score_up or lateral:
                 current_answer = revised
                 current_score = revised_score
                 current_fail = revised_fail
+                seen_failures.add(revised_fail)
             if current_score.score >= 1.0:
                 converged = True
                 break

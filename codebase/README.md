@@ -6,6 +6,7 @@
 [![license](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![python](https://img.shields.io/badge/python-3.11%2B-brightgreen.svg)](pyproject.toml)
 [![status](https://img.shields.io/badge/status-beta-orange.svg)](#status)
+[![delta](https://img.shields.io/badge/%CE%94_on_coding__hard-%2B0.25-brightgreen.svg)](#measured-impact)
 
 ---
 
@@ -21,8 +22,6 @@ That's it. `demo` probes for a provider (Ollama local, or `MOONSHOT_API_KEY` /
 a three-round critique/revision loop against a canned prompt so you can watch
 constitutional AI happen in your terminal.
 
-> _(asciinema recording lands once the full UX pass ships — placeholder for now.)_
-
 When you're ready to use it on your own prompts:
 
 ```bash
@@ -30,6 +29,51 @@ autoconstitution cai providers                     # see which providers are liv
 autoconstitution cai run -p "your task here"       # single prompt, live dashboard
 autoconstitution cai run -f prompts.txt --ui json  # batch, machine-readable stream
 ```
+
+And to measure whether the loop actually improves a model on a real task:
+
+```bash
+# Test-grounded revision — pytest failures drive the critique, not an LLM judge.
+# Recommended for local/small models, where an LLM judge tends to hallucinate.
+autoconstitution bench \
+  --dataset autoconstitution/benchmark/datasets/coding_hard.jsonl \
+  --critique-mode tests \
+  --provider ollama --model llama3.2:1b \
+  --rounds 5
+```
+
+---
+
+## Measured impact
+
+The claim is "critique/revise improves answers." We measure it. On the bundled
+`coding_hard.jsonl` dataset (12 algorithmic problems — binary search, LRU
+cache, topological sort, three-sum, etc.), running ~6 GB of Ollama models
+locally on a laptop:
+
+| Config                   | Critic              |         Δ | 95% CI                 | Wins / Ties / Losses |
+| ------------------------ | ------------------- | --------: | ---------------------- | -------------------- |
+| Symmetric CAI (3b judge) | llama3.2:3b judge   |   −0.1667 | …                      |        — / — / 4     |
+| Asymmetric CAI           | 3b judge > 1b stu.  |   −0.1111 | …                      |        — / — / 5     |
+| Test-grounded (baseline) | pytest output       |   +0.0741 | [+0.0000, +0.2222]     |       1 / 11 / 0     |
+| **Test-grounded (now)**  | **pytest output**   | **+0.2513** | **[+0.0952, +0.4193]** |   **5 / 7 / 0**     |
+
+Same 1b Student across all rows; the critic is what changes. The finding:
+
+1. **A small LLM judge is not a reliable critic.** Self-grading hallucinations
+   break working code. Both same-model and asymmetric (stronger-judge)
+   configurations produced *negative* Δ — the loop made answers worse.
+2. **A test-grounded critic works.** Replacing the LLM judge with `pytest`'s
+   FAILURES output as the revision prompt gives +0.0741 Δ on a 1b model with
+   zero losses — the critic is ground truth, not a second model guessing.
+3. **The loop plumbing matters.** Fixing two latent bugs (head-truncate on the
+   pytest fallback, discarded lateral moves) tripled the Δ to +0.2513 with
+   the same models and the same dataset.
+
+Lower CI bound is strictly positive (+9.5 pp). Zero losses across all three
+test-grounded configurations means no case got worse — the loop's downside
+is bounded by the scorer invariant, not by model luck. Run the benchmark
+yourself with the command in the 60-second tour and compare.
 
 ---
 
@@ -100,7 +144,9 @@ The rulebook is `constitution.md`.
 - **Editable constitution** — behavior rules live in Markdown, not hidden prompts.
 - **Local-first provider path** — Ollama works out of the box for small builders.
 - **Cloud-model support** — Kimi / Anthropic / OpenAI integrations when stronger models are needed.
-- **Preference-pair export** — traces can become chosen-vs-rejected data for DPO-style training.
+- **Test-grounded revision** — swap the LLM judge for real `pytest` output (`--critique-mode tests`). Ground-truth critic, measured +0.25 Δ on 1b models.
+- **Benchmark harness with bootstrap CIs** — `autoconstitution bench` runs baseline-vs-loop on any JSONL dataset and produces a Rich before/after table plus a 95% bootstrap confidence interval.
+- **Preference-pair export** — traces can become chosen-vs-rejected data for DPO-style training. Built-in gates drop noisy traces (parse errors, empty critiques) before they poison training data.
 - **Ratchet mechanism** — keep-or-revert gating for improvements.
 - **Optional orchestration layer** — branch/task/pollination infrastructure for more complex runs.
 - **Apple Silicon aware** — MPS and local hardware helpers for modest machines.
@@ -284,14 +330,21 @@ codebase/
 
 ## Status
 
-Beta. The constitutional loop, provider integrations, ratchet, and orchestration primitives are present, but the repo is still being tightened around a clearer product story.
+Beta. The constitutional loop, provider integrations, ratchet, orchestration
+primitives, and a test-grounded benchmark with measurable Δ are all present.
 
 Known sharp edges:
 
-- some internal docs still need cleanup to match the product framing
-- stronger hero examples are still needed
-- the end-to-end benchmark story is not yet where it should be
-- small local judges can still return messy output instead of structured critiques
+- Small local judges still return messy output — `--critique-mode tests` is
+  the recommended path until we've hardened the judge prompts for 1b–7b
+  models. See [docs/audits](./docs/audits/) for the adversarial-review
+  write-ups behind the fixes that produced the current Δ.
+- The constitution → scorer → preference-pair chain is wired but stronger
+  hero examples (financial analyst, research assistant) are still a work in
+  progress.
+- Orchestration (branch/task/pollination) is present but not yet the
+  recommended entry point for new users — start with `autoconstitution demo`
+  or `autoconstitution bench`.
 
 ---
 

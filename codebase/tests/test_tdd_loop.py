@@ -187,3 +187,37 @@ async def test_lateral_with_empty_fail_not_counted(monkeypatch: pytest.MonkeyPat
     outcome = report.outcomes[0]
     assert outcome.after_answer == "baseline"
     assert outcome.after_score.score == 0.5
+
+
+@pytest.mark.asyncio
+async def test_lateral_cycle_detected_and_rejected(monkeypatch: pytest.MonkeyPatch) -> None:
+    """A→B→A cycle: the second FAIL_A must be rejected as oscillation, not
+    accepted as lateral progress. Without cycle detection, the Student burns
+    the rounds budget flipping between two equally-broken solutions.
+    """
+    score_queue = [
+        (0.5, "FAIL_A"),  # baseline
+        (0.5, "FAIL_B"),  # lateral, new signature — accepted
+        (0.5, "FAIL_A"),  # back to A — must be rejected as cycle
+        (0.5, "FAIL_B"),  # back to B — also rejected
+    ]
+    monkeypatch.setattr(
+        "autoconstitution.benchmark.tdd_loop._score_answer",
+        _score_sequence(score_queue),
+    )
+
+    student = _ScriptedStudent(["baseline", "rev_B", "rev_A_again", "rev_B_again"])
+    cases = [
+        BenchCase(
+            id="t1",
+            prompt="solve",
+            metadata={"hidden_tests": "def test_x(): assert True"},
+        )
+    ]
+    report = await run_tdd_benchmark(cases, student, max_rounds=3, timeout_s=5)
+
+    outcome = report.outcomes[0]
+    # After accepting B on round 1, round 2's FAIL_A is a known cycle — reject.
+    # Round 3's FAIL_B is also a cycle. Final state should be rev_B (FAIL_B).
+    assert outcome.after_answer == "rev_B"
+    assert outcome.after_score.score == 0.5
