@@ -51,14 +51,9 @@ The claim is "critique/revise improves answers." We measure it. On the bundled
 cache, topological sort, three-sum, etc.), running ~6 GB of Ollama models
 locally on a laptop:
 
-| Config                   | Critic              |         Δ | 95% CI                 | Wins / Ties / Losses |
-| ------------------------ | ------------------- | --------: | ---------------------- | -------------------- |
-| Symmetric CAI (3b judge) | llama3.2:3b judge   |   −0.1667 | …                      |        — / — / 4     |
-| Asymmetric CAI           | 3b judge > 1b stu.  |   −0.1111 | …                      |        — / — / 5     |
-| Test-grounded (baseline) | pytest output       |   +0.0741 | [+0.0000, +0.2222]     |       1 / 11 / 0     |
-| **Test-grounded (now)**  | **pytest output**   | **+0.2513** | **[+0.0952, +0.4193]** |   **5 / 7 / 0**     |
+![Δ by critic configuration — CAI judge approaches underperform; test-grounded critique clears +0.25 with 95% CI strictly positive](./docs/images/delta-by-config.png)
 
-Same 1b Student across all rows; the critic is what changes. The finding:
+Same 1b Student across all four rows; only the critic changes. The finding:
 
 1. **A small LLM judge is not a reliable critic.** Self-grading hallucinations
    break working code. Both same-model and asymmetric (stronger-judge)
@@ -69,6 +64,20 @@ Same 1b Student across all rows; the critic is what changes. The finding:
 3. **The loop plumbing matters.** Fixing two latent bugs (head-truncate on the
    pytest fallback, discarded lateral moves) tripled the Δ to +0.2513 with
    the same models and the same dataset.
+
+Zooming in on the winning configuration, the gains are concentrated — five
+cases move substantially, seven stay put, and nothing regresses:
+
+![Per-case lift on coding_hard — 5 wins, 7 ties, 0 losses](./docs/images/per-case-lift.png)
+
+The underlying table, for completeness:
+
+| Config                   | Critic              |         Δ | 95% CI                 | Wins / Ties / Losses |
+| ------------------------ | ------------------- | --------: | ---------------------- | -------------------- |
+| Symmetric CAI (3b judge) | llama3.2:3b judge   |   −0.1667 | single run             |        — / — / 4     |
+| Asymmetric CAI           | 3b judge > 1b stu.  |   −0.1111 | single run             |        — / — / 5     |
+| Test-grounded (baseline) | pytest output       |   +0.0741 | [+0.0000, +0.2222]     |       1 / 11 / 0     |
+| **Test-grounded (now)**  | **pytest output**   | **+0.2513** | **[+0.0952, +0.4193]** |   **5 / 7 / 0**     |
 
 Lower CI bound is strictly positive (+9.5 pp). Zero losses across all three
 test-grounded configurations means no case got worse — the loop's downside
