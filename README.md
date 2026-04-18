@@ -3,8 +3,8 @@
 > **Autoresearch, but with multiple agents.**
 > A constitutional multi-agent improvement loop where agents propose, critique, revise, judge, and preserve better strategies under rules you edit in Markdown.
 
-[![license](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![python](https://img.shields.io/badge/python-3.11%2B-brightgreen.svg)](pyproject.toml)
+[![license](https://img.shields.io/badge/license-MIT-blue.svg)](codebase/LICENSE)
+[![python](https://img.shields.io/badge/python-3.11%2B-brightgreen.svg)](codebase/pyproject.toml)
 [![status](https://img.shields.io/badge/status-beta-orange.svg)](#status)
 [![delta](https://img.shields.io/badge/%CE%94_on_coding__hard-%2B0.25-brightgreen.svg)](#measured-impact)
 
@@ -36,7 +36,7 @@ And to measure whether the loop actually improves a model on a real task:
 # Test-grounded revision — pytest failures drive the critique, not an LLM judge.
 # Recommended for local/small models, where an LLM judge tends to hallucinate.
 autoconstitution bench \
-  --dataset autoconstitution/benchmark/datasets/coding_hard.jsonl \
+  --dataset codebase/autoconstitution/benchmark/datasets/coding_hard.jsonl \
   --critique-mode tests \
   --provider ollama --model llama3.2:1b \
   --rounds 5
@@ -251,7 +251,7 @@ autoconstitution cai run \
 ```
 
 That example is meant to improve workflow quality, not just generate one-off
-market commentary. See [examples/financial_analyst/README.md](./examples/financial_analyst/README.md).
+market commentary. See [codebase/examples/financial_analyst/README.md](./codebase/examples/financial_analyst/README.md).
 
 ---
 
@@ -350,7 +350,7 @@ Known sharp edges:
 
 ## Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md). `constitution.md` is intentionally a first-class artifact, so improvements to the rules, examples, and critique quality are especially welcome.
+See [codebase/CONTRIBUTING.md](codebase/CONTRIBUTING.md). `codebase/constitution.md` is intentionally a first-class artifact, so improvements to the rules, examples, and critique quality are especially welcome.
 
 ## License
 
