@@ -147,14 +147,15 @@ wandb/
 mlruns/
 lightning_logs/
 
-# Dataset directories
+# Dataset directories — for user-generated data, NOT bundled benchmark
+# datasets which are part of the shipped package.
 data/
-datasets/
 raw_data/
 processed_data/
 *.csv
 *.tsv
 *.jsonl
+!autoconstitution/benchmark/datasets/*.jsonl
 *.parquet
 *.feather
 *.pkl

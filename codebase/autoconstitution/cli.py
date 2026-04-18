@@ -1414,6 +1414,237 @@ def demo() -> None:
 
 
 # ============================================================================
+# Bench Command — prove the CAI loop improves answers
+# ============================================================================
+
+_DEFAULT_DATASET = (
+    Path(__file__).parent / "benchmark" / "datasets" / "coding_bugs.jsonl"
+)
+
+_CODING_SAFETY_BANNER = (
+    "[yellow]⚠  `--scorer coding` executes LLM-generated Python in a subprocess.\n"
+    "The env is sanitized (API keys stripped, HOME/TMPDIR redirected to a tmpdir)\n"
+    "and each case runs under a hard timeout, but this is NOT an adversarial\n"
+    "sandbox. Only run datasets whose `hidden_tests` you've inspected.[/yellow]"
+)
+
+
+def _load_dataset(path: Path) -> list["BenchCaseShim"]:
+    """Read a benchmark JSONL dataset into ``BenchCase`` objects."""
+    from autoconstitution.benchmark import BenchCase
+
+    if not path.exists():
+        console.print(f"[red]dataset not found: {path}[/red]")
+        raise typer.Exit(code=2)
+
+    cases: list[BenchCase] = []
+    for lineno, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+        line = line.strip()
+        if not line:
+            continue
+        try:
+            obj = json.loads(line)
+        except json.JSONDecodeError as exc:
+            console.print(f"[red]dataset line {lineno}: invalid JSON — {exc}[/red]")
+            raise typer.Exit(code=2) from exc
+        try:
+            cases.append(
+                BenchCase(
+                    id=obj["id"],
+                    prompt=obj["prompt"],
+                    metadata=obj.get("metadata", {}),
+                )
+            )
+        except KeyError as exc:
+            console.print(
+                f"[red]dataset line {lineno}: missing required field {exc}[/red]"
+            )
+            raise typer.Exit(code=2) from exc
+    return cases
+
+
+# Forward reference: runtime imports BenchCase lazily to keep CLI start-up fast.
+BenchCaseShim = Any  # noqa: PYI050  - documented as opaque to CLI callers
+
+
+@app.command("bench")
+def bench(
+    dataset: Annotated[
+        Path,
+        typer.Option(
+            "--dataset",
+            "-d",
+            help=(
+                "Path to a JSONL dataset. Each line: "
+                '{"id": str, "prompt": str, "metadata": {...}}. '
+                "Default: the bundled coding_bugs dataset."
+            ),
+        ),
+    ] = _DEFAULT_DATASET,
+    scorer_name: Annotated[
+        str,
+        typer.Option(
+            "--scorer",
+            "-s",
+            help="Which scorer to use. 'coding' runs hidden tests; "
+            "'judge' asks a separate LLM to rate answers against a rubric.",
+        ),
+    ] = "coding",
+    rounds: Annotated[
+        int,
+        typer.Option("--rounds", help="Max critique/revise rounds per case."),
+    ] = 3,
+    threshold: Annotated[
+        float,
+        typer.Option(
+            "--threshold",
+            help="Minimum aggregate Δ required to exit 0. Default 0.0 "
+            "(any improvement passes).",
+        ),
+    ] = 0.0,
+    yes: Annotated[
+        bool,
+        typer.Option(
+            "--yes",
+            "-y",
+            help="Skip the safety prompt for the coding scorer (CI use).",
+        ),
+    ] = False,
+    provider_name: Annotated[
+        Optional[str],
+        typer.Option("--provider", help="Force a provider for the CAI loop."),
+    ] = None,
+) -> None:
+    """Benchmark the CAI loop: baseline (Student alone) vs full critique/revise.
+
+    Runs every case in the dataset twice — once with the Student alone, once
+    through the critique/revision loop — scores both, and prints a Rich
+    before/after table plus an aggregate summary with a 95% bootstrap CI.
+
+    Exit 0 iff the aggregate Δ meets ``--threshold``, otherwise 1. Good as a
+    CI gate for prompt/constitution changes.
+    """
+    import asyncio as _asyncio
+
+    from autoconstitution.benchmark import run_benchmark
+    from autoconstitution.benchmark.events import (
+        BenchCaseEnd,
+        BenchCaseStart,
+        BenchEnd,
+        BenchEvent,
+        BenchStart,
+    )
+    from autoconstitution.benchmark.report import (
+        render_report_summary,
+        render_report_table,
+    )
+    from autoconstitution.benchmark.scorers import SCORERS
+    from autoconstitution.cai import (
+        CritiqueRevisionLoop,
+        JudgeAgent,
+        StudentAgent,
+    )
+    from autoconstitution.providers import pick_provider
+
+    # ---- Validate scorer ------------------------------------------------
+    if scorer_name not in SCORERS:
+        console.print(
+            f"[red]unknown scorer {scorer_name!r}. "
+            f"available: {sorted(SCORERS)}[/red]"
+        )
+        raise typer.Exit(code=2)
+
+    # ---- Safety prompt for coding ---------------------------------------
+    if scorer_name == "coding" and not yes:
+        console.print(Panel.fit(_CODING_SAFETY_BANNER, border_style="yellow"))
+        if not typer.confirm("Continue?", default=True):
+            console.print("[dim]Aborted by user.[/dim]")
+            raise typer.Exit(code=130)
+
+    # ---- Load dataset ---------------------------------------------------
+    cases = _load_dataset(dataset)
+    if not cases:
+        console.print(f"[red]dataset has no cases: {dataset}[/red]")
+        raise typer.Exit(code=2)
+    console.print(
+        f"[cyan]Loaded {len(cases)} case(s) from {dataset.name}[/cyan]"
+    )
+
+    async def _go() -> int:
+        # ---- Provider + loop -------------------------------------------
+        prefer = [provider_name] if provider_name else None
+        choice = await pick_provider(prefer=prefer)
+        console.print(
+            f"[green]Using provider: {choice.name} ({choice.model})[/green] "
+            f"[dim]— {choice.reason}[/dim]"
+        )
+        student = StudentAgent(provider=choice.provider)
+        judge = JudgeAgent(provider=choice.provider)
+        loop = CritiqueRevisionLoop(student=student, judge=judge, max_rounds=rounds)
+
+        # ---- Scorer -----------------------------------------------------
+        scorer_cls = SCORERS[scorer_name]
+        if scorer_name == "judge":
+            scorer = scorer_cls(provider=choice.provider)
+        else:
+            scorer = scorer_cls()
+
+        # ---- Progress bar driven by bench events ------------------------
+        with Progress(
+            SpinnerColumn(),
+            TextColumn("[progress.description]{task.description}"),
+            BarColumn(),
+            TaskProgressColumn(),
+            TimeElapsedColumn(),
+            console=console,
+        ) as progress:
+            task_id = progress.add_task("Benchmark", total=len(cases))
+
+            def _sink(event: BenchEvent) -> None:
+                if isinstance(event, BenchCaseStart):
+                    progress.update(
+                        task_id,
+                        description=f"case {event.index + 1}/{len(cases)}: {event.case.id}",
+                    )
+                elif isinstance(event, BenchCaseEnd):
+                    progress.advance(task_id)
+                elif isinstance(event, BenchStart):
+                    progress.update(task_id, description="starting")
+                elif isinstance(event, BenchEnd):
+                    progress.update(task_id, description="done")
+
+            try:
+                report = await run_benchmark(cases, scorer, loop, on_event=_sink)
+            finally:
+                await scorer.close()
+
+        # ---- Render -----------------------------------------------------
+        console.print()
+        console.print(render_report_table(report, max_rows=20))
+        console.print(render_report_summary(report))
+
+        # ---- Exit code --------------------------------------------------
+        if report.delta < threshold:
+            console.print(
+                f"\n[yellow]Δ={report.delta:+.4f} below threshold "
+                f"{threshold:+.4f} — exiting 1 for CI gate.[/yellow]"
+            )
+            return 1
+        return 0
+
+    try:
+        raise typer.Exit(code=_asyncio.run(_go()))
+    except KeyboardInterrupt:
+        console.print("\n[yellow]Interrupted by user[/yellow]")
+        raise typer.Exit(code=130) from None
+    except typer.Exit:
+        raise
+    except Exception as exc:  # noqa: BLE001 - boundary: surface to CLI user
+        console.print(f"\n[red]✗ Benchmark failed: {exc}[/red]")
+        raise typer.Exit(code=1) from exc
+
+
+# ============================================================================
 # Main Entry Point
 # ============================================================================
 

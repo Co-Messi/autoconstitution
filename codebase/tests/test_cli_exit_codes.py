@@ -61,3 +61,33 @@ def test_demo_command_help_exits_zero() -> None:
     result = runner.invoke(app, ["demo", "--help"])
     assert result.exit_code == 0
     assert "canned prompt" in result.output.lower()
+
+
+def test_bench_command_registered() -> None:
+    runner = CliRunner()
+    result = runner.invoke(app, ["--help"])
+    assert result.exit_code == 0
+    assert "bench" in result.output.lower()
+
+
+def test_bench_command_help_exits_zero() -> None:
+    runner = CliRunner()
+    result = runner.invoke(app, ["bench", "--help"])
+    assert result.exit_code == 0
+    assert "benchmark" in result.output.lower()
+    assert "--scorer" in result.output
+
+
+def test_bench_unknown_scorer_exits_2() -> None:
+    runner = CliRunner()
+    result = runner.invoke(app, ["bench", "--scorer", "nope", "--yes"])
+    assert result.exit_code == 2
+    assert "unknown scorer" in result.output.lower()
+
+
+def test_bench_missing_dataset_exits_2() -> None:
+    runner = CliRunner()
+    result = runner.invoke(
+        app, ["bench", "--dataset", "/no/such/file.jsonl", "--scorer", "judge"]
+    )
+    assert result.exit_code == 2

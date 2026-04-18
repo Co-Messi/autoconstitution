@@ -125,6 +125,7 @@ packages = ["autoconstitution"]
 [tool.hatch.build.targets.wheel.force-include]
 "autoconstitution/py.typed" = "autoconstitution/py.typed"
 "constitution.md" = "autoconstitution/constitution.md"
+"autoconstitution/benchmark/datasets/coding_bugs.jsonl" = "autoconstitution/benchmark/datasets/coding_bugs.jsonl"
 
 [tool.black]
 line-length = 100
