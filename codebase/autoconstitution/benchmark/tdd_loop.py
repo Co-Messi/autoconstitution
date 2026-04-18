@@ -140,15 +140,19 @@ async def run_tdd_benchmark(
                 revised, hidden_tests, setup_str, timeout_s
             )
             rounds_used = round_num + 1
-            if revised_score.score > current_score.score:
-                # Accept improvement.
+            score_up = revised_score.score > current_score.score
+            # Lateral progress: same score, different failure signature. The
+            # Student has moved past the old bug — refresh the prompt with the
+            # new failure so it doesn't keep re-solving the same equation.
+            lateral = (
+                revised_score.score == current_score.score
+                and revised_fail != current_fail
+                and revised_fail != ""
+            )
+            if score_up or lateral:
                 current_answer = revised
                 current_score = revised_score
                 current_fail = revised_fail
-            else:
-                # Don't regress — keep the better answer but keep iterating
-                # against the original failure in case the next try lands it.
-                pass
             if current_score.score >= 1.0:
                 converged = True
                 break
@@ -290,7 +294,7 @@ def _score_answer(
                     detail="no tests collected — likely a syntax error",
                     passed=False,
                 ),
-                _truncate(output, 400),
+                _truncate_tail(output, 400),
             )
 
         score = passed_count / total
@@ -345,8 +349,11 @@ def _extract_failure_text(output: str) -> str:
             start = i
             break
     if start is None:
-        # No structured failures — fall back to a tail of stdout.
-        return _truncate(output, 800)
+        # No structured FAILURES section — this is where pytest's ERRORS
+        # section lives (SyntaxError, ImportError, collection errors). The
+        # actual traceback is at the TAIL of stdout, preceded by pytest's
+        # platform/plugin headers that we don't want to feed to the model.
+        return _truncate_tail(output, 800)
     # End at the short summary section or end of file.
     end = len(lines)
     for i in range(start + 1, len(lines)):
@@ -358,7 +365,15 @@ def _extract_failure_text(output: str) -> str:
 
 
 def _truncate(text: str, limit: int) -> str:
+    """Head-truncate — used for the FAILURES block where the test name and
+    assertion come first in ``--tb=short`` format."""
     return text if len(text) <= limit else text[: limit - 1] + "…"
+
+
+def _truncate_tail(text: str, limit: int) -> str:
+    """Tail-truncate — used for raw pytest stdout fallbacks, where the
+    traceback/error lives at the bottom and the top is header noise."""
+    return text if len(text) <= limit else "…" + text[-(limit - 1) :]
 
 
 def _build_revision_prompt(
