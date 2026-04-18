@@ -73,6 +73,70 @@ def _legacy_notice(name: str) -> None:
     )
 
 
+async def _pick_student_and_judge(
+    *,
+    student_provider: Optional[str],
+    student_model: Optional[str],
+    judge_provider: Optional[str],
+    judge_model: Optional[str],
+    quiet: bool = False,
+) -> tuple[Any, Any]:
+    """Pick Student + Judge providers, asymmetric if any judge-* flag is set.
+
+    When both judge flags are ``None`` the Judge reuses the Student's provider
+    — zero behavioural change from the single-provider default. When either
+    judge flag is set, ``pick_provider`` is called a second time with the
+    judge overrides; a missing ``--judge-provider`` inherits the Student's
+    chosen provider name, so ``--judge-model llama3.2:3b`` alone means
+    "same provider, different model".
+
+    Returns ``(student_choice, judge_choice)``. When asymmetric, the two
+    are distinct :class:`ProviderChoice` objects even if they happen to
+    land on the same backend.
+    """
+    from autoconstitution.providers import pick_provider
+
+    student_choice = await pick_provider(
+        prefer=[student_provider] if student_provider else None,
+        ollama_model=student_model,
+    )
+
+    asymmetric = judge_provider is not None or judge_model is not None
+    if not asymmetric:
+        judge_choice = student_choice
+    else:
+        judge_pref: Optional[List[str]]
+        if judge_provider:
+            judge_pref = [judge_provider]
+        elif student_provider:
+            judge_pref = [student_provider]
+        else:
+            judge_pref = [student_choice.name]
+        judge_choice = await pick_provider(
+            prefer=judge_pref,
+            ollama_model=judge_model,
+        )
+
+    if not quiet:
+        if student_choice is judge_choice:
+            console.print(
+                f"[green]Provider: {student_choice.name} "
+                f"({student_choice.model})[/green] "
+                f"[dim]— {student_choice.reason}[/dim]"
+            )
+        else:
+            mixed_providers = student_choice.name != judge_choice.name
+            pair_style = "bold green" if mixed_providers else "cyan"
+            console.print(
+                f"[{pair_style}]Student: {student_choice.name} "
+                f"({student_choice.model}) · "
+                f"Judge: {judge_choice.name} ({judge_choice.model})"
+                f"[/{pair_style}]"
+            )
+
+    return student_choice, judge_choice
+
+
 # ============================================================================
 # Configuration Classes
 # ============================================================================
@@ -1092,6 +1156,37 @@ def cai_run(
         Optional[str],
         typer.Option("--provider", help="Force a provider (ollama/kimi/anthropic/openai)."),
     ] = None,
+    model: Annotated[
+        Optional[str],
+        typer.Option(
+            "--model",
+            help=(
+                "Override the Student's model (currently honored for Ollama only; "
+                "Anthropic/OpenAI/Kimi models are controlled via env vars)."
+            ),
+        ),
+    ] = None,
+    judge_provider_name: Annotated[
+        Optional[str],
+        typer.Option(
+            "--judge-provider",
+            help=(
+                "Use a different provider for the Judge. Enables asymmetric "
+                "Student/Judge pairings (e.g. local Student + cloud Judge). "
+                "When unset, Judge reuses Student's provider."
+            ),
+        ),
+    ] = None,
+    judge_model: Annotated[
+        Optional[str],
+        typer.Option(
+            "--judge-model",
+            help=(
+                "Override the Judge's model (Ollama only). Useful for "
+                "same-provider asymmetric sizes, e.g. 1B Student + 3B Judge."
+            ),
+        ),
+    ] = None,
     constitution: Annotated[
         Optional[Path],
         typer.Option("--constitution", help="Path to a custom constitution.md."),
@@ -1176,15 +1271,15 @@ def cai_run(
 
     # ---- Spin up the loop ----------------------------------------------
     async def _go() -> None:
-        prefer = [provider_name] if provider_name else None
-        choice = await pick_provider(prefer=prefer)
-        console.print(
-            f"[green]Using provider: {choice.name} (model={choice.model})[/green] "
-            f"[dim]— {choice.reason}[/dim]"
+        student_choice, judge_choice = await _pick_student_and_judge(
+            student_provider=provider_name,
+            student_model=model,
+            judge_provider=judge_provider_name,
+            judge_model=judge_model,
         )
 
-        student = StudentAgent(provider=choice.provider)
-        judge = JudgeAgent(provider=choice.provider, constitution_path=constitution)
+        student = StudentAgent(provider=student_choice.provider)
+        judge = JudgeAgent(provider=judge_choice.provider, constitution_path=constitution)
         loop = CritiqueRevisionLoop(student=student, judge=judge, max_rounds=max_rounds)
 
         # Resolve 'auto' against the actual runtime (TTY, batch vs single).
@@ -1514,6 +1609,31 @@ def bench(
         Optional[str],
         typer.Option("--provider", help="Force a provider for the CAI loop."),
     ] = None,
+    model: Annotated[
+        Optional[str],
+        typer.Option(
+            "--model",
+            help="Override the Student's model (Ollama only).",
+        ),
+    ] = None,
+    judge_provider_name: Annotated[
+        Optional[str],
+        typer.Option(
+            "--judge-provider",
+            help=(
+                "Use a different provider for the Judge. Asymmetric pairings "
+                "avoid the Student-grades-Student failure mode. Default: reuse "
+                "the Student's provider."
+            ),
+        ),
+    ] = None,
+    judge_model: Annotated[
+        Optional[str],
+        typer.Option(
+            "--judge-model",
+            help="Override the Judge's model (Ollama only).",
+        ),
+    ] = None,
     max_rows: Annotated[
         Optional[int],
         typer.Option(
@@ -1582,20 +1702,22 @@ def bench(
 
     async def _go() -> int:
         # ---- Provider + loop -------------------------------------------
-        prefer = [provider_name] if provider_name else None
-        choice = await pick_provider(prefer=prefer)
-        console.print(
-            f"[green]Using provider: {choice.name} ({choice.model})[/green] "
-            f"[dim]— {choice.reason}[/dim]"
+        student_choice, judge_choice = await _pick_student_and_judge(
+            student_provider=provider_name,
+            student_model=model,
+            judge_provider=judge_provider_name,
+            judge_model=judge_model,
         )
-        student = StudentAgent(provider=choice.provider)
-        judge = JudgeAgent(provider=choice.provider)
+        student = StudentAgent(provider=student_choice.provider)
+        judge = JudgeAgent(provider=judge_choice.provider)
         loop = CritiqueRevisionLoop(student=student, judge=judge, max_rounds=rounds)
 
         # ---- Scorer -----------------------------------------------------
         scorer_cls = SCORERS[scorer_name]
         if scorer_name == "judge":
-            scorer = scorer_cls(provider=choice.provider)
+            # Judge scorer reuses the Judge's provider (stronger evaluator
+            # than the Student, which is the whole point of asymmetry).
+            scorer = scorer_cls(provider=judge_choice.provider)
         else:
             scorer = scorer_cls()
 
