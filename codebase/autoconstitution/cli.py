@@ -1,8 +1,9 @@
 """
-autoconstitution CLI - A command-line interface for managing swarm research experiments.
+autoconstitution CLI.
 
-This module provides commands for running, resuming, monitoring, and benchmarking
-swarm research experiments with rich output and progress bars.
+This module exposes both the legacy experiment-management commands and the
+product-facing Constitutional AI loop commands. Public-facing help should frame
+the tool as a multi-agent improvement loop rather than a generic swarm runner.
 """
 
 from __future__ import annotations
@@ -14,7 +15,7 @@ import time
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Union
 
 import typer
 import yaml
@@ -39,11 +40,101 @@ console = Console()
 # Create the main Typer app
 app = typer.Typer(
     name="autoconstitution",
-    help="autoconstitution CLI - Manage swarm research experiments",
+    help=(
+        "autoconstitution CLI - multi-agent autoresearch for critique, revision, "
+        "and keep-or-revert improvement loops"
+    ),
     no_args_is_help=True,
     rich_markup_mode="rich",
     add_completion=True,
 )
+
+# Legacy experiment-orchestrator commands live behind `autoconstitution legacy ...`.
+# The product CAI loop is the primary surface (`autoconstitution cai run`,
+# `autoconstitution demo`); these commands predate that split and stick around
+# for existing users / scripts. Each prints a one-line deprecation notice on use.
+legacy_app = typer.Typer(
+    name="legacy",
+    help=(
+        "Legacy experiment-orchestrator commands. Prefer `autoconstitution cai run` "
+        "for new work; these are kept for backwards compatibility."
+    ),
+    no_args_is_help=True,
+    rich_markup_mode="rich",
+)
+app.add_typer(legacy_app, name="legacy")
+
+
+def _legacy_notice(name: str) -> None:
+    """One-line deprecation notice printed at the top of every legacy command."""
+    console.print(
+        f"[yellow]`autoconstitution legacy {name}` is a legacy command. "
+        f"For new work, use `autoconstitution cai run` or `autoconstitution demo`.[/yellow]"
+    )
+
+
+async def _pick_student_and_judge(
+    *,
+    student_provider: Optional[str],
+    student_model: Optional[str],
+    judge_provider: Optional[str],
+    judge_model: Optional[str],
+    quiet: bool = False,
+) -> tuple[Any, Any]:
+    """Pick Student + Judge providers, asymmetric if any judge-* flag is set.
+
+    When both judge flags are ``None`` the Judge reuses the Student's provider
+    — zero behavioural change from the single-provider default. When either
+    judge flag is set, ``pick_provider`` is called a second time with the
+    judge overrides; a missing ``--judge-provider`` inherits the Student's
+    chosen provider name, so ``--judge-model llama3.2:3b`` alone means
+    "same provider, different model".
+
+    Returns ``(student_choice, judge_choice)``. When asymmetric, the two
+    are distinct :class:`ProviderChoice` objects even if they happen to
+    land on the same backend.
+    """
+    from autoconstitution.providers import pick_provider
+
+    student_choice = await pick_provider(
+        prefer=[student_provider] if student_provider else None,
+        ollama_model=student_model,
+    )
+
+    asymmetric = judge_provider is not None or judge_model is not None
+    if not asymmetric:
+        judge_choice = student_choice
+    else:
+        judge_pref: Optional[List[str]]
+        if judge_provider:
+            judge_pref = [judge_provider]
+        elif student_provider:
+            judge_pref = [student_provider]
+        else:
+            judge_pref = [student_choice.name]
+        judge_choice = await pick_provider(
+            prefer=judge_pref,
+            ollama_model=judge_model,
+        )
+
+    if not quiet:
+        if student_choice is judge_choice:
+            console.print(
+                f"[green]Provider: {student_choice.name} "
+                f"({student_choice.model})[/green] "
+                f"[dim]— {student_choice.reason}[/dim]"
+            )
+        else:
+            mixed_providers = student_choice.name != judge_choice.name
+            pair_style = "bold green" if mixed_providers else "cyan"
+            console.print(
+                f"[{pair_style}]Student: {student_choice.name} "
+                f"({student_choice.model}) · "
+                f"Judge: {judge_choice.name} ({judge_choice.model})"
+                f"[/{pair_style}]"
+            )
+
+    return student_choice, judge_choice
 
 
 # ============================================================================
@@ -317,7 +408,7 @@ def create_progress_bar() -> Progress:
 # Commands
 # ============================================================================
 
-@app.command()
+@legacy_app.command()
 def run(
     name: Annotated[
         Optional[str],
@@ -353,7 +444,7 @@ def run(
     ] = False,
 ) -> None:
     """
-    Run a new swarm research experiment.
+    Legacy orchestrator experiment runner.
     
     Examples:
         autoconstitution run
@@ -478,7 +569,7 @@ def run(
     console.print(f"\nResults saved to: {exp_config.output_dir}")
 
 
-@app.command()
+@legacy_app.command()
 def resume(
     experiment_id: Annotated[
         str,
@@ -494,7 +585,7 @@ def resume(
     ] = None,
 ) -> None:
     """
-    Resume a previously paused or interrupted experiment.
+    Resume a legacy orchestrator experiment.
     
     Examples:
         autoconstitution resume consensus_test_a1b2c3d4
@@ -577,7 +668,7 @@ def resume(
     console.print(f"Total iterations: {state.current_iteration}")
 
 
-@app.command()
+@legacy_app.command()
 def status(
     experiment_id: Annotated[
         Optional[str],
@@ -597,7 +688,7 @@ def status(
     ] = 2,
 ) -> None:
     """
-    Check the status of experiments.
+    Check the status of legacy orchestrator experiments.
     
     Examples:
         autoconstitution status
@@ -716,7 +807,7 @@ def status(
         display_status()
 
 
-@app.command()
+@legacy_app.command()
 def benchmark(
     config: Annotated[
         Optional[Path],
@@ -740,7 +831,7 @@ def benchmark(
     ] = None,
 ) -> None:
     """
-    Run benchmark suite to compare different configurations.
+    Run legacy orchestrator benchmarks.
     
     Examples:
         autoconstitution benchmark
@@ -960,7 +1051,7 @@ def clean(
     ] = False,
 ) -> None:
     """
-    Clean up old experiment files.
+    Clean up legacy experiment files.
     
     Examples:
         autoconstitution clean
@@ -1029,7 +1120,10 @@ def clean(
 
 cai_app = typer.Typer(
     name="cai",
-    help="Constitutional AI loop: Student answers, Judge critiques, Student revises.",
+    help=(
+        "Constitutional multi-agent loop: agents propose, critique, revise, and "
+        "judge under an editable constitution."
+    ),
     no_args_is_help=True,
     rich_markup_mode="rich",
 )
@@ -1062,9 +1156,60 @@ def cai_run(
         Optional[str],
         typer.Option("--provider", help="Force a provider (ollama/kimi/anthropic/openai)."),
     ] = None,
+    model: Annotated[
+        Optional[str],
+        typer.Option(
+            "--model",
+            help=(
+                "Override the Student's model (currently honored for Ollama only; "
+                "Anthropic/OpenAI/Kimi models are controlled via env vars)."
+            ),
+        ),
+    ] = None,
+    judge_provider_name: Annotated[
+        Optional[str],
+        typer.Option(
+            "--judge-provider",
+            help=(
+                "Use a different provider for the Judge. Enables asymmetric "
+                "Student/Judge pairings (e.g. local Student + cloud Judge). "
+                "When unset, Judge reuses Student's provider."
+            ),
+        ),
+    ] = None,
+    judge_model: Annotated[
+        Optional[str],
+        typer.Option(
+            "--judge-model",
+            help=(
+                "Override the Judge's model (Ollama only). Useful for "
+                "same-provider asymmetric sizes, e.g. 1B Student + 3B Judge."
+            ),
+        ),
+    ] = None,
     constitution: Annotated[
         Optional[Path],
         typer.Option("--constitution", help="Path to a custom constitution.md."),
+    ] = None,
+    ui: Annotated[
+        str,
+        typer.Option(
+            "--ui",
+            help=(
+                "Rendering mode: 'live' (Rich dashboard with role panels), "
+                "'plain' (one line per event, pipe-friendly), 'json' (JSONL "
+                "events on stdout for programmatic consumers), or 'auto' "
+                "(live when running a single prompt in a TTY, plain otherwise)."
+            ),
+        ),
+    ] = "auto",
+    live: Annotated[
+        Optional[bool],
+        typer.Option(
+            "--live/--no-live",
+            hidden=True,
+            help="Deprecated: use --ui=live / --ui=plain instead.",
+        ),
     ] = None,
 ) -> None:
     """Run the Constitutional AI critique-revision loop for real.
@@ -1072,6 +1217,7 @@ def cai_run(
     Requires a working provider. Ollama is tried first (no key needed).
     """
     import asyncio as _asyncio
+    import sys as _sys
 
     from autoconstitution.cai import (
         CritiqueRevisionLoop,
@@ -1080,6 +1226,20 @@ def cai_run(
     )
     from autoconstitution.cai.preference_pairs import PreferencePairBuilder
     from autoconstitution.providers import pick_provider
+
+    # ---- Resolve UI mode -----------------------------------------------
+    ui_normalized = ui.lower().strip()
+    if ui_normalized not in ("live", "plain", "json", "auto"):
+        console.print(
+            f"[red]Invalid --ui value: {ui!r}. "
+            f"Pick one of live/plain/json/auto.[/red]"
+        )
+        raise typer.Exit(code=2)
+    # Back-compat: --live/--no-live overrides --ui when explicitly set.
+    if live is True:
+        ui_normalized = "live"
+    elif live is False:
+        ui_normalized = "plain"
 
     # ---- Collect prompts ------------------------------------------------
     prompts: List[str] = []
@@ -1111,34 +1271,80 @@ def cai_run(
 
     # ---- Spin up the loop ----------------------------------------------
     async def _go() -> None:
-        prefer = [provider_name] if provider_name else None
-        choice = await pick_provider(prefer=prefer)
-        console.print(
-            f"[green]Using provider: {choice.name} (model={choice.model})[/green] "
-            f"[dim]— {choice.reason}[/dim]"
+        student_choice, judge_choice = await _pick_student_and_judge(
+            student_provider=provider_name,
+            student_model=model,
+            judge_provider=judge_provider_name,
+            judge_model=judge_model,
         )
 
-        student = StudentAgent(provider=choice.provider)
-        judge = JudgeAgent(provider=choice.provider, constitution_path=constitution)
+        student = StudentAgent(provider=student_choice.provider)
+        judge = JudgeAgent(provider=judge_choice.provider, constitution_path=constitution)
         loop = CritiqueRevisionLoop(student=student, judge=judge, max_rounds=max_rounds)
 
-        with Progress(
-            SpinnerColumn(),
-            TextColumn("[progress.description]{task.description}"),
-            BarColumn(),
-            TaskProgressColumn(),
-            TimeElapsedColumn(),
-            console=console,
-        ) as progress:
-            task_id = progress.add_task("Critique/Revision", total=len(prompts))
-            results = []
+        # Resolve 'auto' against the actual runtime (TTY, batch vs single).
+        effective_ui = ui_normalized
+        if effective_ui == "auto":
+            effective_ui = (
+                "live"
+                if len(prompts) == 1 and _sys.stdout.isatty()
+                else "plain"
+            )
+        # 'live' only makes sense for a single prompt — downgrade with a notice.
+        if effective_ui == "live" and len(prompts) != 1:
+            console.print(
+                "[yellow]--ui=live ignored for batch runs; "
+                "falling back to plain.[/yellow]"
+            )
+            effective_ui = "plain"
 
-            async def _one(p: str):
-                r = await loop.run(p)
-                progress.advance(task_id)
-                return r
+        if effective_ui == "live":
+            from autoconstitution.ui.live import LiveRenderer
 
-            results = await _asyncio.gather(*(_one(p) for p in prompts))
+            renderer = LiveRenderer(console=console, max_rounds=max_rounds)
+            try:
+                result = await loop.run(prompts[0], renderer=renderer)
+                results = [result]
+            finally:
+                await renderer.aclose()
+        elif effective_ui == "json":
+            from autoconstitution.ui.json_stream import JSONRenderer
+
+            json_renderer = JSONRenderer()
+            try:
+                results = []
+                for p in prompts:
+                    results.append(await loop.run(p, renderer=json_renderer))
+            finally:
+                await json_renderer.aclose()
+        else:  # plain
+            from autoconstitution.ui.plain import PlainRenderer
+
+            plain_renderer = PlainRenderer()
+            try:
+                if len(prompts) == 1:
+                    results = [await loop.run(prompts[0], renderer=plain_renderer)]
+                else:
+                    with Progress(
+                        SpinnerColumn(),
+                        TextColumn("[progress.description]{task.description}"),
+                        BarColumn(),
+                        TaskProgressColumn(),
+                        TimeElapsedColumn(),
+                        console=console,
+                    ) as progress:
+                        task_id = progress.add_task(
+                            "Critique/Revision", total=len(prompts)
+                        )
+
+                        async def _one(p: str):
+                            r = await loop.run(p, renderer=plain_renderer)
+                            progress.advance(task_id)
+                            return r
+
+                        results = await _asyncio.gather(*(_one(p) for p in prompts))
+            finally:
+                await plain_renderer.aclose()
 
         # ---- Export preference pairs -----------------------------------
         builder = PreferencePairBuilder()
@@ -1158,53 +1364,458 @@ def cai_run(
             )
         )
 
-    _asyncio.run(_go())
+    try:
+        _asyncio.run(_go())
+    except KeyboardInterrupt:
+        console.print("\n[yellow]Interrupted by user[/yellow]")
+        raise typer.Exit(code=130) from None
+    except Exception as exc:  # noqa: BLE001 - boundary: surface to CLI user
+        console.print(f"\n[red]✗ CAI run failed: {exc}[/red]")
+        raise typer.Exit(code=1) from exc
 
 
 @cai_app.command("providers")
-def cai_providers() -> None:
-    """Show which providers are currently detected."""
+def cai_providers(
+    timeout: float = typer.Option(
+        5.0, "--timeout", help="Per-provider probe timeout in seconds."
+    ),
+) -> None:
+    """Probe every provider in parallel and report which ones actually work."""
     import asyncio as _asyncio
 
-    from autoconstitution.providers.auto_detect import (
-        _ollama_available,
-        _ollama_pick_model,
+    from autoconstitution.providers.probe import any_ready, probe_all
+    from autoconstitution.ui.probe_view import (
+        render_no_provider_panel,
+        render_probe_table,
     )
 
-    async def _check() -> None:
-        table = Table(title="Provider availability")
-        table.add_column("Provider")
-        table.add_column("Status")
-        table.add_column("Detail")
+    async def _check() -> int:
+        results = await probe_all(timeout_s=timeout)
+        console.print(render_probe_table(results))
+        if not any_ready(results):
+            console.print()
+            console.print(render_no_provider_panel())
+            return 1
+        return 0
 
-        # Ollama
-        if await _ollama_available():
-            model = await _ollama_pick_model()
-            table.add_row("ollama", "[green]ready[/green]", f"model={model or '(none)'}")
+    raise typer.Exit(code=_asyncio.run(_check()))
+
+
+# ============================================================================
+# Demo Command — hero experience for new users
+# ============================================================================
+
+_DEMO_PROMPT = (
+    "Design a one-month remote-work onboarding plan for a senior engineer "
+    "who needs to ramp up on a large codebase without burning out. Focus on "
+    "concrete weekly objectives and measurable checkpoints."
+)
+
+
+@app.command("demo")
+def demo() -> None:
+    """Run the Constitutional AI loop on a canned prompt with zero configuration.
+
+    Detects an available provider (Ollama first, then cloud keys), renders the
+    live role-panel dashboard, and walks through three critique/revision
+    rounds. Intended as the first thing a new user runs.
+    """
+    import asyncio as _asyncio
+
+    from autoconstitution.cai import (
+        CritiqueRevisionLoop,
+        JudgeAgent,
+        StudentAgent,
+    )
+    from autoconstitution.providers import pick_provider
+    from autoconstitution.providers.probe import any_ready, probe_all
+    from autoconstitution.ui.live import LiveRenderer
+    from autoconstitution.ui.probe_view import (
+        render_no_provider_panel,
+        render_probe_table,
+    )
+
+    async def _go() -> int:
+        console.print(
+            Panel.fit(
+                Text.from_markup(
+                    "[bold]autoconstitution demo[/bold]\n"
+                    "[dim]Watching constitutional AI critique and revise itself "
+                    "in three rounds.[/dim]"
+                ),
+                border_style="cyan",
+            )
+        )
+
+        # 1. Probe providers — same widget as `cai providers` so the user learns
+        #    both commands at once.
+        probe_results = await probe_all(timeout_s=5.0)
+        console.print(render_probe_table(probe_results))
+        if not any_ready(probe_results):
+            console.print()
+            console.print(render_no_provider_panel())
+            return 1
+
+        # 2. Pick a provider. pick_provider() knows how to wire the adapter.
+        choice = await pick_provider()
+        console.print(
+            f"\n[green]✓ Provider ready:[/green] {choice.name} "
+            f"[dim]({choice.model} — {choice.reason})[/dim]"
+        )
+        console.print(f"\n[bold]Prompt:[/bold] {_DEMO_PROMPT}\n")
+
+        # 3. Spin up Student + Judge and run the loop with the live dashboard.
+        student = StudentAgent(provider=choice.provider)
+        judge = JudgeAgent(provider=choice.provider)
+        loop = CritiqueRevisionLoop(student=student, judge=judge, max_rounds=3)
+
+        renderer = LiveRenderer(console=console, max_rounds=3)
+        try:
+            result = await loop.run(_DEMO_PROMPT, renderer=renderer)
+        finally:
+            await renderer.aclose()
+
+        # 4. Summary + nudge toward real usage.
+        converged_note = (
+            "[green]✓ Judge signed off on the revision[/green]"
+            if result.converged
+            else "[yellow]⚠ Still critiques outstanding — would benefit from "
+            "more rounds[/yellow]"
+        )
+        console.print(
+            Panel.fit(
+                f"{converged_note}\n"
+                f"Rounds used: {result.rounds_used}\n"
+                f"Critiques collected: {len(result.critiques)}\n\n"
+                "[bold]Next:[/bold]\n"
+                "  autoconstitution cai run --prompt \"your task here\"\n"
+                "  autoconstitution cai run --prompts-file prompts.txt -o pairs.jsonl",
+                title="demo complete",
+                border_style="green",
+            )
+        )
+        return 0
+
+    try:
+        raise typer.Exit(code=_asyncio.run(_go()))
+    except KeyboardInterrupt:
+        console.print("\n[yellow]Interrupted by user[/yellow]")
+        raise typer.Exit(code=130) from None
+    except typer.Exit:
+        raise
+    except Exception as exc:  # noqa: BLE001 - boundary: surface to CLI user
+        console.print(f"\n[red]✗ Demo failed: {exc}[/red]")
+        raise typer.Exit(code=1) from exc
+
+
+# ============================================================================
+# Bench Command — prove the CAI loop improves answers
+# ============================================================================
+
+_DEFAULT_DATASET = (
+    Path(__file__).parent / "benchmark" / "datasets" / "coding_bugs.jsonl"
+)
+
+_CODING_SAFETY_BANNER = (
+    "[yellow]⚠  `--scorer coding` executes LLM-generated Python in a subprocess.\n"
+    "The env is sanitized (API keys stripped, HOME/TMPDIR redirected to a tmpdir)\n"
+    "and each case runs under a hard timeout, but this is NOT an adversarial\n"
+    "sandbox. Only run datasets whose `hidden_tests` you've inspected.[/yellow]"
+)
+
+
+def _load_dataset(path: Path) -> "list[_BenchCase]":
+    """Read a benchmark JSONL dataset into ``BenchCase`` objects."""
+    from autoconstitution.benchmark import BenchCase
+
+    if not path.exists():
+        console.print(f"[red]dataset not found: {path}[/red]")
+        raise typer.Exit(code=2)
+
+    cases: list[BenchCase] = []
+    for lineno, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+        line = line.strip()
+        if not line:
+            continue
+        try:
+            obj = json.loads(line)
+        except json.JSONDecodeError as exc:
+            console.print(f"[red]dataset line {lineno}: invalid JSON — {exc}[/red]")
+            raise typer.Exit(code=2) from exc
+        try:
+            cases.append(
+                BenchCase(
+                    id=obj["id"],
+                    prompt=obj["prompt"],
+                    metadata=obj.get("metadata", {}),
+                )
+            )
+        except KeyError as exc:
+            console.print(
+                f"[red]dataset line {lineno}: missing required field {exc}[/red]"
+            )
+            raise typer.Exit(code=2) from exc
+    return cases
+
+
+if TYPE_CHECKING:
+    from autoconstitution.benchmark import BenchCase as _BenchCase
+
+
+@app.command("bench")
+def bench(
+    dataset: Annotated[
+        Path,
+        typer.Option(
+            "--dataset",
+            "-d",
+            help=(
+                "Path to a JSONL dataset. Each line: "
+                '{"id": str, "prompt": str, "metadata": {...}}. '
+                "Default: the bundled coding_bugs dataset."
+            ),
+        ),
+    ] = _DEFAULT_DATASET,
+    scorer_name: Annotated[
+        str,
+        typer.Option(
+            "--scorer",
+            "-s",
+            help="Which scorer to use. 'coding' runs hidden tests; "
+            "'judge' asks a separate LLM to rate answers against a rubric.",
+        ),
+    ] = "coding",
+    rounds: Annotated[
+        int,
+        typer.Option("--rounds", help="Max critique/revise rounds per case."),
+    ] = 3,
+    threshold: Annotated[
+        float,
+        typer.Option(
+            "--threshold",
+            help="Minimum aggregate Δ required to exit 0. Default 0.0 "
+            "(any improvement passes).",
+        ),
+    ] = 0.0,
+    yes: Annotated[
+        bool,
+        typer.Option(
+            "--yes",
+            "-y",
+            help="Skip the safety prompt for the coding scorer (CI use).",
+        ),
+    ] = False,
+    provider_name: Annotated[
+        Optional[str],
+        typer.Option("--provider", help="Force a provider for the CAI loop."),
+    ] = None,
+    model: Annotated[
+        Optional[str],
+        typer.Option(
+            "--model",
+            help="Override the Student's model (Ollama only).",
+        ),
+    ] = None,
+    judge_provider_name: Annotated[
+        Optional[str],
+        typer.Option(
+            "--judge-provider",
+            help=(
+                "Use a different provider for the Judge. Asymmetric pairings "
+                "avoid the Student-grades-Student failure mode. Default: reuse "
+                "the Student's provider."
+            ),
+        ),
+    ] = None,
+    judge_model: Annotated[
+        Optional[str],
+        typer.Option(
+            "--judge-model",
+            help="Override the Judge's model (Ollama only).",
+        ),
+    ] = None,
+    max_rows: Annotated[
+        Optional[int],
+        typer.Option(
+            "--max-rows",
+            help=(
+                "Clip the per-case table to N rows (best + worst halves). "
+                "Default: show every row."
+            ),
+        ),
+    ] = None,
+    critique_mode: Annotated[
+        str,
+        typer.Option(
+            "--critique-mode",
+            help=(
+                "Revision loop flavour. 'judge' (default): Student ↔ Judge CAI "
+                "loop. 'tests': feed failing pytest output directly into the "
+                "Student's revision prompt — no Judge, ground truth critique. "
+                "Only valid with --scorer coding."
+            ),
+        ),
+    ] = "judge",
+) -> None:
+    """Benchmark the CAI loop: baseline (Student alone) vs full critique/revise.
+
+    Runs every case in the dataset twice — once with the Student alone, once
+    through the critique/revision loop — scores both, and prints a Rich
+    before/after table plus an aggregate summary with a 95% bootstrap CI.
+
+    Exit 0 iff the aggregate Δ meets ``--threshold``, otherwise 1. Good as a
+    CI gate for prompt/constitution changes.
+    """
+    import asyncio as _asyncio
+
+    from autoconstitution.benchmark import run_benchmark
+    from autoconstitution.benchmark.events import (
+        BenchCaseEnd,
+        BenchCaseStart,
+        BenchEnd,
+        BenchEvent,
+        BenchStart,
+    )
+    from autoconstitution.benchmark.report import (
+        render_report_summary,
+        render_report_table,
+    )
+    from autoconstitution.benchmark.scorers import SCORERS
+    from autoconstitution.cai import (
+        CritiqueRevisionLoop,
+        JudgeAgent,
+        StudentAgent,
+    )
+    from autoconstitution.providers import pick_provider
+
+    # ---- Validate scorer ------------------------------------------------
+    if scorer_name not in SCORERS:
+        console.print(
+            f"[red]unknown scorer {scorer_name!r}. "
+            f"available: {sorted(SCORERS)}[/red]"
+        )
+        raise typer.Exit(code=2)
+
+    # ---- Validate critique mode ----------------------------------------
+    if critique_mode not in ("judge", "tests"):
+        console.print(
+            f"[red]unknown --critique-mode {critique_mode!r}. "
+            f"valid: judge, tests[/red]"
+        )
+        raise typer.Exit(code=2)
+    if critique_mode == "tests" and scorer_name != "coding":
+        console.print(
+            "[red]--critique-mode tests only works with --scorer coding "
+            "(test output is the critique).[/red]"
+        )
+        raise typer.Exit(code=2)
+
+    # ---- Safety prompt for coding ---------------------------------------
+    if scorer_name == "coding" and not yes:
+        console.print(Panel.fit(_CODING_SAFETY_BANNER, border_style="yellow"))
+        if not typer.confirm("Continue?", default=True):
+            console.print("[dim]Aborted by user.[/dim]")
+            raise typer.Exit(code=130)
+
+    # ---- Load dataset ---------------------------------------------------
+    cases = _load_dataset(dataset)
+    if not cases:
+        console.print(f"[red]dataset has no cases: {dataset}[/red]")
+        raise typer.Exit(code=2)
+    console.print(
+        f"[cyan]Loaded {len(cases)} case(s) from {dataset.name}[/cyan]"
+    )
+
+    async def _go() -> int:
+        # ---- Provider + loop -------------------------------------------
+        student_choice, judge_choice = await _pick_student_and_judge(
+            student_provider=provider_name,
+            student_model=model,
+            judge_provider=judge_provider_name,
+            judge_model=judge_model,
+        )
+        student = StudentAgent(provider=student_choice.provider)
+        judge = JudgeAgent(provider=judge_choice.provider)
+        loop = CritiqueRevisionLoop(student=student, judge=judge, max_rounds=rounds)
+
+        # ---- Scorer -----------------------------------------------------
+        scorer_cls = SCORERS[scorer_name]
+        if scorer_name == "judge":
+            # Judge scorer reuses the Judge's provider (stronger evaluator
+            # than the Student, which is the whole point of asymmetry).
+            scorer = scorer_cls(provider=judge_choice.provider)
         else:
-            table.add_row("ollama", "[red]unavailable[/red]", "daemon not reachable")
+            scorer = scorer_cls()
 
-        # Kimi
-        if os.environ.get("MOONSHOT_API_KEY") or os.environ.get("KIMI_API_KEY"):
-            table.add_row("kimi", "[green]ready[/green]", "API key set")
-        else:
-            table.add_row("kimi", "[yellow]no key[/yellow]", "MOONSHOT_API_KEY unset")
+        # ---- Progress bar driven by bench events ------------------------
+        with Progress(
+            SpinnerColumn(),
+            TextColumn("[progress.description]{task.description}"),
+            BarColumn(),
+            TaskProgressColumn(),
+            TimeElapsedColumn(),
+            console=console,
+        ) as progress:
+            task_id = progress.add_task("Benchmark", total=len(cases))
 
-        # Anthropic
-        if os.environ.get("ANTHROPIC_API_KEY"):
-            table.add_row("anthropic", "[green]ready[/green]", "ANTHROPIC_API_KEY set")
-        else:
-            table.add_row("anthropic", "[yellow]no key[/yellow]", "ANTHROPIC_API_KEY unset")
+            def _sink(event: BenchEvent) -> None:
+                if isinstance(event, BenchCaseStart):
+                    progress.update(
+                        task_id,
+                        description=f"case {event.index + 1}/{len(cases)}: {event.case.id}",
+                    )
+                elif isinstance(event, BenchCaseEnd):
+                    progress.advance(task_id)
+                elif isinstance(event, BenchStart):
+                    progress.update(task_id, description="starting")
+                elif isinstance(event, BenchEnd):
+                    progress.update(task_id, description="done")
 
-        # OpenAI
-        if os.environ.get("OPENAI_API_KEY"):
-            table.add_row("openai", "[green]ready[/green]", "OPENAI_API_KEY set")
-        else:
-            table.add_row("openai", "[yellow]no key[/yellow]", "OPENAI_API_KEY unset")
+            try:
+                if critique_mode == "tests":
+                    # Test-driven revision loop — Student sees actual pytest
+                    # failures instead of a Judge's opinion. No Judge LLM in
+                    # the loop; hidden tests are the critique.
+                    from autoconstitution.benchmark.tdd_loop import (
+                        run_tdd_benchmark,
+                    )
+                    report = await run_tdd_benchmark(
+                        cases,
+                        student_choice.provider,
+                        max_rounds=rounds,
+                        on_event=_sink,
+                    )
+                else:
+                    report = await run_benchmark(
+                        cases, scorer, loop, on_event=_sink
+                    )
+            finally:
+                await scorer.close()
 
-        console.print(table)
+        # ---- Render -----------------------------------------------------
+        console.print()
+        console.print(render_report_table(report, max_rows=max_rows))
+        console.print(render_report_summary(report))
 
-    _asyncio.run(_check())
+        # ---- Exit code --------------------------------------------------
+        if report.delta < threshold:
+            console.print(
+                f"\n[yellow]Δ={report.delta:+.4f} below threshold "
+                f"{threshold:+.4f} — exiting 1 for CI gate.[/yellow]"
+            )
+            return 1
+        return 0
+
+    try:
+        raise typer.Exit(code=_asyncio.run(_go()))
+    except KeyboardInterrupt:
+        console.print("\n[yellow]Interrupted by user[/yellow]")
+        raise typer.Exit(code=130) from None
+    except typer.Exit:
+        raise
+    except Exception as exc:  # noqa: BLE001 - boundary: surface to CLI user
+        console.print(f"\n[red]✗ Benchmark failed: {exc}[/red]")
+        raise typer.Exit(code=1) from exc
 
 
 # ============================================================================

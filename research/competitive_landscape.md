@@ -5,7 +5,7 @@
 
 ## Executive Summary
 
-This report maps the landscape of parallel and collaborative AI self-improvement projects as of April 2026. The space has evolved rapidly with significant activity across decentralized compute networks, multi-agent frameworks, and self-improving agent systems. **SwarmResearch occupies a unique position** at the intersection of collective intelligence, distributed optimization, and autonomous agent collaboration—an intersection that remains largely unoccupied by existing solutions.
+This report maps the landscape of parallel and collaborative AI self-improvement projects as of April 2026. The space has evolved rapidly with significant activity across decentralized compute networks, multi-agent frameworks, and self-improving agent systems. **autoconstitution occupies a unique position** at the intersection of collective intelligence, distributed optimization, and autonomous agent collaboration—an intersection that remains largely unoccupied by existing solutions.
 
 ---
 
@@ -398,7 +398,7 @@ This report maps the landscape of parallel and collaborative AI self-improvement
 
 ---
 
-## 6. SwarmResearch's Unique Position
+## 6. autoconstitution's Unique Position
 
 ### 6.1 Market Gap Analysis
 
@@ -408,21 +408,21 @@ This report maps the landscape of parallel and collaborative AI self-improvement
 3. **Multi-agent collaboration** (like CrewAI)
 4. **Autonomous research capabilities** (like ADAS)
 
-### 6.2 SwarmResearch's Differentiation
+### 6.2 autoconstitution's Differentiation
 
 #### Genuinely Novel Aspects:
 
 1. **Parallel Self-Improvement Architecture**
-   - Unlike Bittensor (competitive subnets), SwarmResearch enables collaborative self-improvement
+   - Unlike Bittensor (competitive subnets), autoconstitution enables collaborative self-improvement
    - Agents improve collectively rather than competing for rewards
 
 2. **Collective Intelligence Optimization**
-   - SIER focuses on reasoning; SwarmResearch extends to general capability improvement
+   - SIER focuses on reasoning; autoconstitution extends to general capability improvement
    - Density-driven diversity maintenance (similar to SIER but applied to agent capabilities)
 
 3. **Autonomous Research Swarms**
-   - Unlike ChatDev (software-focused), SwarmResearch targets general AI research
-   - Unlike ADAS (architecture design), SwarmResearch improves existing systems
+   - Unlike ChatDev (software-focused), autoconstitution targets general AI research
+   - Unlike ADAS (architecture design), autoconstitution improves existing systems
 
 4. **Unified Framework**
    - Combines distributed compute (Akash/Bittensor)
@@ -444,7 +444,7 @@ This report maps the landscape of parallel and collaborative AI self-improvement
             SIER ────────┼────── MetaGPT
                          │
                          ▼
-                    SwarmResearch
+                    autoconstitution
               (Unique Intersection)
 ```
 
@@ -471,7 +471,7 @@ This report maps the landscape of parallel and collaborative AI self-improvement
 
 #### Differentiation from Key Competitors:
 
-| Competitor | SwarmResearch Differentiation |
+| Competitor | autoconstitution Differentiation |
 |------------|------------------------------|
 | Bittensor | Collaboration vs competition; no token speculation |
 | CrewAI | Self-improvement + distributed vs static orchestration |
@@ -520,7 +520,7 @@ This report maps the landscape of parallel and collaborative AI self-improvement
 
 2. **Research Acceleration**
    - Position as essential infrastructure for AI research
-   - Like Hugging Face for models, SwarmResearch for collaborative training
+   - Like Hugging Face for models, autoconstitution for collaborative training
 
 ---
 
@@ -553,7 +553,7 @@ The parallel/collaborative AI self-improvement landscape is fragmented across:
 
 **No existing solution occupies the intersection of all four dimensions.**
 
-SwarmResearch has a unique opportunity to become the first unified platform for collaborative, self-improving, distributed AI agent swarms. The window for establishing this position is narrow—competitors are actively expanding their capabilities.
+autoconstitution has a unique opportunity to become the first unified platform for collaborative, self-improving, distributed AI agent swarms. The window for establishing this position is narrow—competitors are actively expanding their capabilities.
 
 **Key Success Factors:**
 1. Rapid development and public launch

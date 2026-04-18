@@ -1,8 +1,8 @@
-# SwarmResearch State Management & Persistence Architecture
+# autoconstitution State Management & Persistence Architecture
 
 ## Executive Summary
 
-This document defines the persistent state system for SwarmResearch, designed to ensure **reliable operation during overnight runs** and **seamless recovery from failures**. The architecture provides atomic checkpointing, incremental persistence, and deterministic recovery for all critical system state.
+This document defines the persistent state system for autoconstitution, designed to ensure **reliable operation during overnight runs** and **seamless recovery from failures**. The architecture provides atomic checkpointing, incremental persistence, and deterministic recovery for all critical system state.
 
 ### Design Goals
 1. **Zero Data Loss**: All progress is persisted before acknowledgment
@@ -685,7 +685,7 @@ import fcntl
 
 class CheckpointManager:
     """
-    Manages all checkpointing operations for SwarmResearch.
+    Manages all checkpointing operations for autoconstitution.
     Ensures atomic, durable, and efficient state persistence.
     """
     
@@ -1113,7 +1113,7 @@ class RecoveryResult:
 
 class RecoveryManager:
     """
-    Manages recovery from failures for SwarmResearch.
+    Manages recovery from failures for autoconstitution.
     Implements multiple recovery strategies with automatic fallback.
     """
     
@@ -1128,8 +1128,8 @@ class RecoveryManager:
         self.max_rollback = max_rollback_attempts
         
         # Paths
-        self.pid_file = self.base_path / "swarmresearch.pid"
-        self.lock_file = self.base_path / "swarmresearch.lock"
+        self.pid_file = self.base_path / "autoconstitution.pid"
+        self.lock_file = self.base_path / "autoconstitution.lock"
         
         # State
         self._recovery_in_progress = False
@@ -1153,7 +1153,7 @@ class RecoveryManager:
             if psutil.pid_exists(pid):
                 # Process still running - check if it's us
                 proc = psutil.Process(pid)
-                if "swarmresearch" in proc.name().lower():
+                if "autoconstitution" in proc.name().lower():
                     return False, "Another instance is running"
             
             # PID exists but process doesn't - unclean shutdown
@@ -1495,7 +1495,7 @@ class _RecoveryAttempt:
 ### 4.1 File Organization
 
 ```
-swarmresearch_data/
+autoconstitution_data/
 ├── session.json                    # Session metadata and pointers
 ├── checkpoints/
 │   ├── full_20240115_143022_abc12345.json.gz    # Full checkpoint

@@ -35,7 +35,7 @@ This report surveys major techniques for improving LLM training efficiency acros
 - Compare against random-sampling baseline
 - Measure examples/epoch to convergence
 
-**Recommendation for SwarmResearch**: 
+**Recommendation for autoconstitution**: 
 - Implement multiple difficulty metrics (perplexity, length, linguistic complexity)
 - Run A/B tests with curriculum vs. random sampling
 - Monitor loss variance as early signal
@@ -67,7 +67,7 @@ This report surveys major techniques for improving LLM training efficiency acros
 - Monitor validation loss at fixed token budgets
 - Compare quality/efficiency tradeoffs
 
-**Recommendation for SwarmResearch**:
+**Recommendation for autoconstitution**:
 - Implement fast data quality estimation (perplexity from small model)
 - Track tokens processed per hour as primary efficiency metric
 - Validate that pruned data maintains model quality
@@ -101,7 +101,7 @@ This report surveys major techniques for improving LLM training efficiency acros
 - Evaluate on held-out tasks
 - Monitor for model collapse indicators
 
-**Recommendation for SwarmResearch**:
+**Recommendation for autoconstitution**:
 - Start with verification-easy domains (math with answer checking)
 - Track diversity metrics alongside training
 - Implement contamination detection
@@ -133,7 +133,7 @@ This report surveys major techniques for improving LLM training efficiency acros
 - Compare uniform vs. optimized mixing
 - Monitor domain balance throughout training
 
-**Recommendation for SwarmResearch**:
+**Recommendation for autoconstitution**:
 - Implement domain-aware logging
 - Use small proxy models to test mixtures
 - Track worst-domain performance as fairness metric
@@ -171,7 +171,7 @@ This report surveys major techniques for improving LLM training efficiency acros
 - Measure training throughput per FLOP
 - Evaluate on diverse tasks to detect specialization
 
-**Recommendation for SwarmResearch**:
+**Recommendation for autoconstitution**:
 - Implement load balancing auxiliary loss
 - Track expert usage entropy (should be high)
 - Compare against dense baseline at same active parameters
@@ -204,7 +204,7 @@ This report surveys major techniques for improving LLM training efficiency acros
 - Monitor attention pattern quality
 - Compare perplexity vs. memory tradeoff
 
-**Recommendation for SwarmResearch**:
+**Recommendation for autoconstitution**:
 - Start with GQA as balanced approach
 - Track memory-per-token metric
 - Validate with long-context evaluations
@@ -241,7 +241,7 @@ This report surveys major techniques for improving LLM training efficiency acros
 - Monitor for instability in training
 - Test reasoning capabilities (known SSM weakness)
 
-**Recommendation for SwarmResearch**:
+**Recommendation for autoconstitution**:
 - Consider hybrid architectures (Mamba + Attention)
 - Test scaling from short to long sequences
 - Monitor training stability carefully
@@ -278,7 +278,7 @@ This report surveys major techniques for improving LLM training efficiency acros
 - Monitor for training instabilities
 - Compare final model quality
 
-**Recommendation for SwarmResearch**:
+**Recommendation for autoconstitution**:
 - Implement as drop-in AdamW replacement
 - Use for 2D/3D weight matrices (attention, MLP)
 - Keep AdamW for embeddings/output head
@@ -313,7 +313,7 @@ This report surveys major techniques for improving LLM training efficiency acros
 - Monitor update norm distributions
 - Measure time-to-convergence
 
-**Recommendation for SwarmResearch**:
+**Recommendation for autoconstitution**:
 - Lion: Fastest convergence, good for experiments
 - Sophia: Best final loss, worth compute overhead
 - AdamW: Most reliable, best downstream performance
@@ -347,7 +347,7 @@ This report surveys major techniques for improving LLM training efficiency acros
 - Compare final model quality across schedules
 - Measure sensitivity to schedule parameters
 
-**Recommendation for SwarmResearch**:
+**Recommendation for autoconstitution**:
 - WSD for flexible training (can extend)
 - Cosine for fixed-budget training
 - WSO if planning mid-training + SFT
@@ -379,7 +379,7 @@ This report surveys major techniques for improving LLM training efficiency acros
 - Monitor for loss increases (bad momentum)
 - Track performance at different batch sizes
 
-**Recommendation for SwarmResearch**:
+**Recommendation for autoconstitution**:
 - Use (β1=0.95, β2=0.99) as starting point
 - Avoid (0.9, 0.95) - shown to fail
 - Test on small scale before committing
@@ -417,7 +417,7 @@ This report surveys major techniques for improving LLM training efficiency acros
 - Monitor for NaN/Inf (instability)
 - Compare final model accuracy
 
-**Recommendation for SwarmResearch**:
+**Recommendation for autoconstitution**:
 - BF16 as safe default
 - FP8 on Hopper for maximum speed
 - Implement dynamic loss scaling
@@ -449,7 +449,7 @@ This report surveys major techniques for improving LLM training efficiency acros
 - Calculate memory/compute tradeoff
 - Monitor for OOM errors
 
-**Recommendation for SwarmResearch**:
+**Recommendation for autoconstitution**:
 - Enable by default for large models
 - Checkpoint at transformer block boundaries
 - Combine with gradient accumulation
@@ -481,7 +481,7 @@ This report surveys major techniques for improving LLM training efficiency acros
 - Validate numerical equivalence
 - Test at various sequence lengths
 
-**Recommendation for SwarmResearch**:
+**Recommendation for autoconstitution**:
 - Use FlashAttention-2 as minimum
 - FlashAttention-3 on H100 for FP8
 - Automatic via PyTorch scaled_dot_product_attention
@@ -516,7 +516,7 @@ This report surveys major techniques for improving LLM training efficiency acros
 - Track end-to-end training throughput
 - Monitor for numerical differences
 
-**Recommendation for SwarmResearch**:
+**Recommendation for autoconstitution**:
 - Integrate Liger-Kernel library
 - 20-60% training speedup reported
 - 40-60% memory reduction
@@ -550,7 +550,7 @@ This report surveys major techniques for improving LLM training efficiency acros
 
 ---
 
-## Recommendations for SwarmResearch Experiment Design
+## Recommendations for autoconstitution Experiment Design
 
 ### Tier 1: High-Discoverability, High-Impact (Implement First)
 

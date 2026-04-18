@@ -1,8 +1,8 @@
-# Fair Comparison Methodology: SwarmResearch vs. Single-Agent AutoResearch
+# Fair Comparison Methodology: autoconstitution vs. Single-Agent AutoResearch
 
 ## Executive Summary
 
-This document establishes a rigorous, statistically sound methodology for comparing SwarmResearch (multi-agent swarm approach) against Karpathy's single-agent autoresearch paradigm. The methodology prioritizes fairness, reproducibility, and statistical validity while controlling for confounding variables.
+This document establishes a rigorous, statistically sound methodology for comparing autoconstitution (multi-agent swarm approach) against Karpathy's single-agent autoresearch paradigm. The methodology prioritizes fairness, reproducibility, and statistical validity while controlling for confounding variables.
 
 ---
 
@@ -65,7 +65,7 @@ Normalized_Score = (Raw_Score - Task_Min) / (Task_Max - Task_Min)
 
 ### 2.1 Architectural Fairness
 
-#### SwarmResearch-Specific Considerations
+#### autoconstitution-Specific Considerations
 - **Agent Count**: Test with varying swarm sizes (3, 5, 7, 10 agents) to find optimal configuration
 - **Communication Overhead**: Include coordination costs in total budget
 - **Parallelism**: Account for wall-clock time vs. total compute time
@@ -77,7 +77,7 @@ Normalized_Score = (Raw_Score - Task_Min) / (Task_Max - Task_Min)
 
 ### 2.2 Fair Comparison Matrix
 
-| Scenario | SwarmResearch Config | Single-Agent Config | Rationale |
+| Scenario | autoconstitution Config | Single-Agent Config | Rationale |
 |----------|---------------------|---------------------|-----------|
 | Equal Compute | 5 agents × 1000 tokens | 1 agent × 5000 tokens | Same total token budget |
 | Equal Time | Parallel execution | Sequential with more iterations | Same wall-clock limit |
@@ -129,7 +129,7 @@ Normalized_Score = (Raw_Score - Task_Min) / (Task_Max - Task_Min)
 
 ```
 For each task:
-  ├── Run SwarmResearch (3 independent trials with different seeds)
+  ├── Run autoconstitution (3 independent trials with different seeds)
   ├── Run Single-Agent (3 independent trials with different seeds)
   └── Evaluate all 6 outputs
 
@@ -209,7 +209,7 @@ environment:
   
 dependencies:
   swarm_research:
-    repository: "https://github.com/.../swarm-research"
+    repository: "https://github.com/.../autoconstitution"
     commit_hash: "abc123def456"
     version_tag: "v2.1.0"
   
@@ -412,7 +412,7 @@ def compute_confidence_interval(data, confidence=0.95):
 
 ### 6.2 Secondary Metrics
 
-| Metric | SwarmResearch Specific | Single-Agent Specific |
+| Metric | autoconstitution Specific | Single-Agent Specific |
 |--------|----------------------|----------------------|
 | **Coordination Overhead** | Inter-agent communication cost | N/A |
 | **Convergence Rate** | Iterations to consensus | Iterations to satisfaction |
@@ -467,17 +467,17 @@ For each task in randomized_order:
     
     # Trial 1
     Set seed = base_seed + task_id * 1000 + 1
-    Run SwarmResearch → Record output + metrics
+    Run autoconstitution → Record output + metrics
     Run Single-Agent → Record output + metrics
     
     # Trial 2 (independent)
     Set seed = base_seed + task_id * 1000 + 2
-    Run SwarmResearch → Record output + metrics
+    Run autoconstitution → Record output + metrics
     Run Single-Agent → Record output + metrics
     
     # Trial 3 (independent)
     Set seed = base_seed + task_id * 1000 + 3
-    Run SwarmResearch → Record output + metrics
+    Run autoconstitution → Record output + metrics
     Run Single-Agent → Record output + metrics
     
     # Evaluation
@@ -512,7 +512,7 @@ After all tasks:
 
 ### 8.1 Results Table Template
 
-| Metric | SwarmResearch (Mean ± SD) | Single-Agent (Mean ± SD) | Difference | p-value | Cohen's d |
+| Metric | autoconstitution (Mean ± SD) | Single-Agent (Mean ± SD) | Difference | p-value | Cohen's d |
 |--------|---------------------------|--------------------------|------------|---------|-----------|
 | Accuracy | 7.8 ± 1.2 | 7.2 ± 1.5 | +0.6 | 0.023* | 0.44 |
 | Time (s) | 245 ± 89 | 312 ± 102 | -67 | 0.001** | -0.70 |
@@ -548,7 +548,7 @@ After all tasks:
 
 ## 10. Conclusion
 
-This methodology provides a rigorous framework for comparing SwarmResearch and single-agent autoresearch approaches. By controlling variables, ensuring fairness, maintaining statistical rigor, and enabling reproducibility, we can generate credible evidence about the relative strengths and weaknesses of each approach.
+This methodology provides a rigorous framework for comparing autoconstitution and single-agent autoresearch approaches. By controlling variables, ensuring fairness, maintaining statistical rigor, and enabling reproducibility, we can generate credible evidence about the relative strengths and weaknesses of each approach.
 
 **Key Principles:**
 1. Control everything that can be controlled

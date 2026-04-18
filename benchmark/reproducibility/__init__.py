@@ -1,5 +1,5 @@
 """
-SwarmResearch Benchmark Reproducibility Module
+autoconstitution Benchmark Reproducibility Module
 
 This module provides tools and utilities for ensuring reproducible
 benchmark execution across different environments and runs.

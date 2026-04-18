@@ -1,11 +1,11 @@
 #!/bin/bash
 # scripts/configure_linux.sh
-# Configure Linux for reproducible SwarmResearch benchmark execution
+# Configure Linux for reproducible autoconstitution benchmark execution
 # Version: 1.0.0
 
 set -e
 
-echo "SwarmResearch Benchmark - Linux Configuration"
+echo "autoconstitution Benchmark - Linux Configuration"
 echo "=============================================="
 echo ""
 

@@ -1,8 +1,8 @@
-# SwarmResearch Ablation Study Design
+# autoconstitution Ablation Study Design
 
 ## Executive Summary
 
-This document presents rigorous ablation study designs to validate each of SwarmResearch's three core innovations independently:
+This document presents rigorous ablation study designs to validate each of autoconstitution's three core innovations independently:
 
 1. **Parallel Branches** - Branch-based organization for parallel research exploration
 2. **Cross-Pollination** - Shared findings broadcast system for knowledge transfer
@@ -1249,4 +1249,4 @@ benchmark_results/
 
 *Document Version: 1.0*
 *Last Updated: 2024*
-*Author: SwarmResearch Team*
+*Author: autoconstitution Team*

@@ -1,5 +1,5 @@
 # .github/workflows/reproducibility.yml
-# GitHub Actions workflow for SwarmResearch Benchmark reproducibility verification
+# GitHub Actions workflow for autoconstitution Benchmark reproducibility verification
 # Version: 1.0.0
 
 name: Reproducibility Check
@@ -97,11 +97,11 @@ jobs:
       
       - name: Download assets
         run: |
-          python -m swarmresearch.download --dataset --model --verify || true
+          python -m autoconstitution.download --dataset --model --verify || true
       
       - name: Run benchmark
         run: |
-          python -m swarmresearch.benchmark \
+          python -m autoconstitution.benchmark \
             --config configs/m4_baseline.yaml \
             --output results/ \
             --seed ${{ matrix.seed }} \
@@ -259,18 +259,18 @@ jobs:
       
       - name: Build Docker image
         run: |
-          docker build -t swarmresearch/benchmark:test .
+          docker build -t autoconstitution/benchmark:test .
       
       - name: Test Docker image
         run: |
-          docker run --rm swarmresearch/benchmark:test python --version
-          docker run --rm swarmresearch/benchmark:test python -m reproducibility.verify_deps
+          docker run --rm autoconstitution/benchmark:test python --version
+          docker run --rm autoconstitution/benchmark:test python -m reproducibility.verify_deps
       
       - name: Test Docker reproducibility
         run: |
           docker run --rm \
             -v $(PWD)/results:/benchmark/results \
-            swarmresearch/benchmark:test \
+            autoconstitution/benchmark:test \
             --config /benchmark/configs/m4_baseline.yaml \
             --output /benchmark/results/ \
             --seed 42 \

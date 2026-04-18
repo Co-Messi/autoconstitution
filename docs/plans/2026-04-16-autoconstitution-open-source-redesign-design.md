@@ -45,4 +45,3 @@ The following should be demoted beneath the fold:
 3. Align package exports, CLI help, and docs with the actual CAI/product surface
 4. Keep engine pieces that support the story, hide the rest under docs/architecture
 5. Build toward one hero example people can immediately imagine using
-

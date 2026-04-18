@@ -1,11 +1,11 @@
-# assets.yaml - Asset version specification for SwarmResearch Benchmark
+# assets.yaml - Asset version specification for autoconstitution Benchmark
 # Version: 1.0.0
 
 assets:
   models:
     swarm-agent-small-3B-int8:
       version: "1.0.0"
-      url: "https://models.swarmresearch.org/v1/swarm-agent-small-3B-int8.gguf"
+      url: "https://models.autoconstitution.org/v1/swarm-agent-small-3B-int8.gguf"
       checksum:
         sha256: "f8e2a9c4d1b701234567890abcdef1234567890abcdef1234567890abcdef12"
       size_bytes: 3214572800
@@ -15,7 +15,7 @@ assets:
       
     swarm-agent-medium-7B-int8:
       version: "1.0.0"
-      url: "https://models.swarmresearch.org/v1/swarm-agent-medium-7B-int8.gguf"
+      url: "https://models.autoconstitution.org/v1/swarm-agent-medium-7B-int8.gguf"
       checksum:
         sha256: "a1b2c3d4e5f678901234567890abcdef1234567890abcdef1234567890abcdef"
       size_bytes: 7500000000
@@ -25,7 +25,7 @@ assets:
       
     swarm-agent-large-13B-int4:
       version: "1.0.0"
-      url: "https://models.swarmresearch.org/v1/swarm-agent-large-13B-int4.gguf"
+      url: "https://models.autoconstitution.org/v1/swarm-agent-large-13B-int4.gguf"
       checksum:
         sha256: "b2c3d4e5f6a78901234567890abcdef1234567890abcdef1234567890abcdef1"
       size_bytes: 8500000000
@@ -34,9 +34,9 @@ assets:
       parameters: "13B"
       
   datasets:
-    swarmresearch_bench_v1:
+    autoconstitution_bench_v1:
       version: "1.0.0"
-      url: "https://benchmarks.swarmresearch.org/datasets/v1/swarmresearch_bench_v1.tar.gz"
+      url: "https://benchmarks.autoconstitution.org/datasets/v1/autoconstitution_bench_v1.tar.gz"
       checksum:
         sha256: "a3f7c9e2d8b101234567890abcdef1234567890abcdef1234567890abcdef123"
       size_bytes: 262144000  # 250 MB

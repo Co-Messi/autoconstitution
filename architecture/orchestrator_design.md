@@ -1,11 +1,11 @@
-# SwarmResearch Orchestrator Design
+# autoconstitution Orchestrator Design
 ## PARL-Based Multi-Agent Research Orchestration System
 
 ---
 
 ## 1. Overview
 
-The SwarmResearch Orchestrator is a master agent that coordinates parallel research exploration using the PARL (Parallel Autoregressive Learning) paradigm. It decomposes complex research problems, spawns specialized sub-agents, monitors their performance, and dynamically reallocates computational resources to maximize research progress.
+The autoconstitution Orchestrator is a master agent that coordinates parallel research exploration using the PARL (Parallel Autoregressive Learning) paradigm. It decomposes complex research problems, spawns specialized sub-agents, monitors their performance, and dynamically reallocates computational resources to maximize research progress.
 
 ### Core Principles
 - **Parallel Exploration**: Multiple research branches explore simultaneously
@@ -105,7 +105,7 @@ class GlobalRatchetState:
             return True
         return False
 
-class SwarmResearchOrchestrator:
+class autoconstitutionOrchestrator:
     """
     Master orchestrator for parallel research exploration.
     
@@ -280,7 +280,7 @@ class ResearchAgent(ABC):
         self,
         agent_id: UUID,
         config: AgentConfig,
-        orchestrator: SwarmResearchOrchestrator
+        orchestrator: autoconstitutionOrchestrator
     ):
         self.agent_id = agent_id
         self.config = config
@@ -641,7 +641,7 @@ class AdaptiveDecomposer:
 class AgentLifecycleManager:
     """Manages the complete lifecycle of research agents."""
     
-    def __init__(self, orchestrator: SwarmResearchOrchestrator):
+    def __init__(self, orchestrator: autoconstitutionOrchestrator):
         self.orchestrator = orchestrator
         self.agent_factory = AgentFactory()
         self.active_tasks: Dict[UUID, asyncio.Task] = {}
@@ -838,7 +838,7 @@ class AgentFactory:
         self,
         config: AgentConfig,
         agent_id: UUID,
-        orchestrator: SwarmResearchOrchestrator
+        orchestrator: autoconstitutionOrchestrator
     ) -> ResearchAgent:
         """Create agent instance based on configuration."""
         agent_class = self.AGENT_TYPES.get(config.agent_type, ExplorerAgent)
@@ -962,7 +962,7 @@ class VerifierAgent(ResearchAgent):
 class PerformanceMonitor:
     """Monitors and analyzes agent/branch performance."""
     
-    def __init__(self, orchestrator: SwarmResearchOrchestrator):
+    def __init__(self, orchestrator: autoconstitutionOrchestrator):
         self.orchestrator = orchestrator
         self.metric_history: Dict[UUID, List[PerformanceMetrics]] = {}
         self.gradient_window_size = 5
@@ -1235,7 +1235,7 @@ async def _monitoring_loop(self) -> None:
 class ReallocationEngine:
     """Decides and executes agent reallocation between branches."""
     
-    def __init__(self, orchestrator: SwarmResearchOrchestrator):
+    def __init__(self, orchestrator: autoconstitutionOrchestrator):
         self.orchestrator = orchestrator
         self.reallocation_cooldown: Dict[UUID, datetime] = {}
         self.cooldown_seconds = 30
@@ -1523,7 +1523,7 @@ async def _reallocation_loop(self) -> None:
 class StateManager:
     """Manages global state with ratchet semantics."""
     
-    def __init__(self, orchestrator: SwarmResearchOrchestrator):
+    def __init__(self, orchestrator: autoconstitutionOrchestrator):
         self.orchestrator = orchestrator
         self.checkpoint_interval = 30  # seconds
         self._checkpoint_task: Optional[asyncio.Task] = None
@@ -1876,8 +1876,8 @@ async def _emit_event(self, event_type: str, data: Dict) -> None:
 ## 9. Complete Orchestrator Implementation
 
 ```python
-class SwarmResearchOrchestratorImpl(SwarmResearchOrchestrator):
-    """Complete implementation of the SwarmResearch Orchestrator."""
+class autoconstitutionOrchestratorImpl(autoconstitutionOrchestrator):
+    """Complete implementation of the autoconstitution Orchestrator."""
     
     def __init__(self, context: ResearchContext, **kwargs):
         super().__init__(context, **kwargs)
@@ -2090,7 +2090,7 @@ async def main():
     )
     
     # Create orchestrator
-    orchestrator = SwarmResearchOrchestratorImpl(
+    orchestrator = autoconstitutionOrchestratorImpl(
         context=context,
         max_concurrent_agents=15,
         reallocation_threshold=0.15,
@@ -2131,7 +2131,7 @@ if __name__ == "__main__":
 
 ## 11. Summary
 
-The SwarmResearch Orchestrator implements a PARL-based multi-agent research system with the following key components:
+The autoconstitution Orchestrator implements a PARL-based multi-agent research system with the following key components:
 
 | Component | Responsibility |
 |-----------|---------------|

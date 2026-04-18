@@ -2,7 +2,7 @@
 
 ## Executive Summary
 
-This report provides an in-depth analysis of Andrej Karpathy's ratchet mechanism used in the AutoResearch framework, focusing on the `val_bpb` metric and exploring alternative ratchet metrics for different optimization targets. The findings inform the design of a pluggable metric interface for SwarmResearch.
+This report provides an in-depth analysis of Andrej Karpathy's ratchet mechanism used in the AutoResearch framework, focusing on the `val_bpb` metric and exploring alternative ratchet metrics for different optimization targets. The findings inform the design of a pluggable metric interface for autoconstitution.
 
 ---
 
@@ -923,7 +923,7 @@ class PluggableRatchet:
 
 ---
 
-## Part 4: Recommendations for SwarmResearch
+## Part 4: Recommendations for autoconstitution
 
 ### 4.1 Metric Selection Guidelines
 
@@ -962,7 +962,7 @@ class PluggableRatchet:
 ### 4.3 Configuration Examples
 
 ```yaml
-# SwarmResearch default configuration
+# autoconstitution default configuration
 ratchet:
   metric:
     class: "BitsPerByteMetric"

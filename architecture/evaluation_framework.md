@@ -1,8 +1,8 @@
-# SwarmResearch Evaluation & Benchmarking Framework
+# autoconstitution Evaluation & Benchmarking Framework
 
 ## Executive Summary
 
-This document defines the comprehensive evaluation framework for SwarmResearch, a multi-agent research system designed to outperform Karpathy's single-agent baseline. The framework ensures rigorous measurement, statistical validity, and protection against benchmark overfitting.
+This document defines the comprehensive evaluation framework for autoconstitution, a multi-agent research system designed to outperform Karpathy's single-agent baseline. The framework ensures rigorous measurement, statistical validity, and protection against benchmark overfitting.
 
 ---
 
@@ -453,10 +453,10 @@ human_evaluation:
 ### 5.1 Executive Summary Report
 
 ```markdown
-# SwarmResearch Evaluation Report
+# autoconstitution Evaluation Report
 **Date:** YYYY-MM-DD  
 **Benchmark Version:** X.Y.Z  
-**Systems Compared:** SwarmResearch vA.B.C vs Karpathy Baseline vX.Y.Z
+**Systems Compared:** autoconstitution vA.B.C vs Karpathy Baseline vX.Y.Z
 
 ## Key Findings
 | Metric | Swarm | Baseline | Delta | p-value | Effect Size |
@@ -466,7 +466,7 @@ human_evaluation:
 | Solution Quality | 4.2/5 | 3.4/5 | +24% | <0.001 | 0.51 (medium) |
 
 ## Conclusion
-SwarmResearch demonstrates statistically significant improvements across all 
+autoconstitution demonstrates statistically significant improvements across all 
 primary metrics with medium to large effect sizes.
 
 ## Confidence Level: HIGH
@@ -631,7 +631,7 @@ full_validation:
 # Study Pre-Registration
 
 ## Hypothesis
-SwarmResearch will achieve >15% improvement in pass@1 over Karpathy baseline.
+autoconstitution will achieve >15% improvement in pass@1 over Karpathy baseline.
 
 ## Design
 - Problems: 500 from Codeforces 800-2000

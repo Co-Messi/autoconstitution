@@ -24,8 +24,9 @@ from __future__ import annotations
 
 import logging
 import os
+from collections.abc import AsyncIterator
 from dataclasses import dataclass
-from typing import Any, Optional
+from typing import Any
 
 import httpx
 
@@ -51,14 +52,19 @@ class _OllamaAdapter:
     def __init__(self, provider: Any, model: str) -> None:
         self._provider = provider
         self._model = model
+        self._initialized = False
 
-    async def complete(
-        self,
-        prompt: str,
-        system: Optional[str] = None,
-        temperature: float = 0.7,
-        max_tokens: int = 2048,
-    ) -> str:
+    async def _ensure_initialized(self) -> None:
+        # BaseProvider requires an explicit initialize(); the CAI-loop and
+        # bench pathways that consume only the adapter shouldn't have to
+        # know that, so we lazy-init on first use.
+        if not self._initialized:
+            await self._provider.initialize()
+            self._initialized = True
+
+    def _build_request(
+        self, prompt: str, system: str | None, temperature: float, max_tokens: int
+    ) -> Any:
         from autoconstitution.providers.ollama import (
             CompletionRequest,
             Message,
@@ -69,15 +75,38 @@ class _OllamaAdapter:
         if system:
             messages.append(Message(role=Role.SYSTEM, content=system))
         messages.append(Message(role=Role.USER, content=prompt))
-
-        req = CompletionRequest(
+        return CompletionRequest(
             model=self._model,
             messages=messages,
             temperature=temperature,
             max_tokens=max_tokens,
         )
+
+    async def complete(
+        self,
+        prompt: str,
+        system: str | None = None,
+        temperature: float = 0.7,
+        max_tokens: int = 2048,
+    ) -> str:
+        await self._ensure_initialized()
+        req = self._build_request(prompt, system, temperature, max_tokens)
         resp = await self._provider.complete(req)
         return resp.content  # type: ignore[no-any-return]
+
+    async def stream(
+        self,
+        prompt: str,
+        system: str | None = None,
+        temperature: float = 0.7,
+        max_tokens: int = 2048,
+    ) -> AsyncIterator[str]:
+        await self._ensure_initialized()
+        req = self._build_request(prompt, system, temperature, max_tokens)
+        async for chunk in self._provider.complete_stream(req):
+            text = getattr(chunk, "content", "")
+            if text:
+                yield text
 
 
 class _OpenAIStyleAdapter:
@@ -87,25 +116,49 @@ class _OpenAIStyleAdapter:
         self._client = client
         self._model = model
 
-    async def complete(
-        self,
-        prompt: str,
-        system: Optional[str] = None,
-        temperature: float = 0.7,
-        max_tokens: int = 2048,
-    ) -> str:
-        messages = []
+    def _messages(self, prompt: str, system: str | None) -> list[dict[str, str]]:
+        messages: list[dict[str, str]] = []
         if system:
             messages.append({"role": "system", "content": system})
         messages.append({"role": "user", "content": prompt})
+        return messages
 
+    async def complete(
+        self,
+        prompt: str,
+        system: str | None = None,
+        temperature: float = 0.7,
+        max_tokens: int = 2048,
+    ) -> str:
         resp = await self._client.chat.completions.create(
             model=self._model,
-            messages=messages,
+            messages=self._messages(prompt, system),
             temperature=temperature,
             max_tokens=max_tokens,
         )
         return resp.choices[0].message.content  # type: ignore[no-any-return]
+
+    async def stream(
+        self,
+        prompt: str,
+        system: str | None = None,
+        temperature: float = 0.7,
+        max_tokens: int = 2048,
+    ) -> AsyncIterator[str]:
+        chunks = await self._client.chat.completions.create(
+            model=self._model,
+            messages=self._messages(prompt, system),
+            temperature=temperature,
+            max_tokens=max_tokens,
+            stream=True,
+        )
+        async for chunk in chunks:
+            if not chunk.choices:
+                continue
+            delta = chunk.choices[0].delta
+            text = getattr(delta, "content", None)
+            if text:
+                yield text
 
 
 class _AnthropicAdapter:
@@ -113,13 +166,9 @@ class _AnthropicAdapter:
         self._client = client
         self._model = model
 
-    async def complete(
-        self,
-        prompt: str,
-        system: Optional[str] = None,
-        temperature: float = 0.7,
-        max_tokens: int = 2048,
-    ) -> str:
+    def _kwargs(
+        self, prompt: str, system: str | None, temperature: float, max_tokens: int
+    ) -> dict[str, Any]:
         kwargs: dict[str, Any] = {
             "model": self._model,
             "max_tokens": max_tokens,
@@ -128,9 +177,33 @@ class _AnthropicAdapter:
         }
         if system:
             kwargs["system"] = system
-        resp = await self._client.messages.create(**kwargs)
-        # Anthropic response: resp.content is a list of blocks
+        return kwargs
+
+    async def complete(
+        self,
+        prompt: str,
+        system: str | None = None,
+        temperature: float = 0.7,
+        max_tokens: int = 2048,
+    ) -> str:
+        resp = await self._client.messages.create(
+            **self._kwargs(prompt, system, temperature, max_tokens)
+        )
         return "".join(block.text for block in resp.content if block.type == "text")
+
+    async def stream(
+        self,
+        prompt: str,
+        system: str | None = None,
+        temperature: float = 0.7,
+        max_tokens: int = 2048,
+    ) -> AsyncIterator[str]:
+        async with self._client.messages.stream(
+            **self._kwargs(prompt, system, temperature, max_tokens)
+        ) as stream:
+            async for text in stream.text_stream:
+                if text:
+                    yield text
 
 
 # ---------- Detection ----------------------------------------------------
@@ -146,7 +219,7 @@ async def _ollama_available(host: str = "http://localhost:11434", timeout: float
         return False
 
 
-async def _ollama_pick_model(host: str = "http://localhost:11434") -> Optional[str]:
+async def _ollama_pick_model(host: str = "http://localhost:11434") -> str | None:
     """Return the first installed Ollama model, or None."""
     try:
         async with httpx.AsyncClient(timeout=2.0) as client:
@@ -162,9 +235,9 @@ async def _ollama_pick_model(host: str = "http://localhost:11434") -> Optional[s
 
 async def pick_provider(
     *,
-    prefer: Optional[list[str]] = None,
+    prefer: list[str] | None = None,
     ollama_host: str = "http://localhost:11434",
-    ollama_model: Optional[str] = None,
+    ollama_model: str | None = None,
 ) -> ProviderChoice:
     """Pick the best available provider. Raises RuntimeError if none work.
 
@@ -175,7 +248,16 @@ async def pick_provider(
         ollama_model: Pin a specific Ollama model; auto-detect if None.
     """
     default_order = ["ollama", "kimi", "anthropic", "openai"]
-    order = prefer + [p for p in default_order if p not in prefer] if prefer else default_order
+    if prefer:
+        unknown = [p for p in prefer if p not in default_order]
+        if unknown:
+            raise ValueError(
+                f"Unknown provider(s) in prefer list: {unknown}. "
+                f"Valid providers: {default_order}"
+            )
+        order = prefer + [p for p in default_order if p not in prefer]
+    else:
+        order = default_order
 
     errors: list[str] = []
 

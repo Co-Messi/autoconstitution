@@ -1,5 +1,5 @@
 # Cross-Pollination Layer Design
-## SwarmResearch Shared Findings Bus
+## autoconstitution Shared Findings Bus
 
 **Version:** 1.0  
 **Purpose:** Enable controlled information sharing across agent swarm while preventing premature convergence

@@ -1,11 +1,11 @@
 #!/bin/bash
 # scripts/configure_macos.sh
-# Configure macOS for reproducible SwarmResearch benchmark execution
+# Configure macOS for reproducible autoconstitution benchmark execution
 # Version: 1.0.0
 
 set -e
 
-echo "SwarmResearch Benchmark - macOS Configuration"
+echo "autoconstitution Benchmark - macOS Configuration"
 echo "=============================================="
 echo ""
 

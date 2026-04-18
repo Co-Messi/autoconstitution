@@ -1,4 +1,4 @@
-# seeds.yaml - Master seed configuration for SwarmResearch Benchmark
+# seeds.yaml - Master seed configuration for autoconstitution Benchmark
 # Version: 1.0.0
 
 benchmark_version: "1.0.0"

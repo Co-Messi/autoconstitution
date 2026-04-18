@@ -85,5 +85,5 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [0.1.0] — initial release (historical)
 
-- Initial SwarmResearch CLI, orchestrator, ratchet, metrics, provider adapters
+- Initial autoconstitution CLI, orchestrator, ratchet, metrics, provider adapters
   for Kimi/Anthropic/OpenAI/Ollama, hardware detection module.

@@ -1545,7 +1545,7 @@ class TestAsyncOperations:
         )
         await final_ratchet.load_state()
         
-        assert final_ratchet.current_best_score == 0.90
+        assert final_ratchet.current_best_score == pytest.approx(0.90)
         assert final_ratchet.experiment_count == 5
 
 

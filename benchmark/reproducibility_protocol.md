@@ -1,4 +1,4 @@
-# SwarmResearch Benchmark Reproducibility Protocol
+# autoconstitution Benchmark Reproducibility Protocol
 
 ## Version 1.0.0 | Last Updated: 2024
 
@@ -6,7 +6,7 @@
 
 ## Executive Summary
 
-This document establishes the complete reproducibility protocol for the SwarmResearch benchmark. Following this protocol ensures that any researcher can reproduce benchmark results with identical outputs, enabling fair comparison across different implementations and hardware configurations.
+This document establishes the complete reproducibility protocol for the autoconstitution benchmark. Following this protocol ensures that any researcher can reproduce benchmark results with identical outputs, enabling fair comparison across different implementations and hardware configurations.
 
 **Key Principles:**
 - **Determinism**: Same inputs produce identical outputs
@@ -56,7 +56,7 @@ All random number generators must be seeded before benchmark execution:
 
 ```python
 # reproducibility/seeds.py
-"""Centralized seed management for SwarmResearch benchmark."""
+"""Centralized seed management for autoconstitution benchmark."""
 
 import random
 import numpy as np
@@ -308,7 +308,7 @@ export SWARMRESEARCH_MODEL_TOP_P=0.9
 export SWARMRESEARCH_MODEL_MAX_TOKENS=1024
 
 # Dataset Configuration
-export SWARMRESEARCH_DATASET_PATH=./datasets/swarmresearch_bench_v1
+export SWARMRESEARCH_DATASET_PATH=./datasets/autoconstitution_bench_v1
 export SWARMRESEARCH_VERIFY_CHECKSUMS=true
 
 # Reproducibility Flags
@@ -385,7 +385,7 @@ def capture_hardware_info() -> Dict[str, Any]:
     return hw_info
 
 def capture_relevant_env_vars() -> Dict[str, str]:
-    """Capture SwarmResearch-related environment variables."""
+    """Capture autoconstitution-related environment variables."""
     import os
     
     relevant_prefixes = ("SWARMRESEARCH", "PYTHON", "OMP", "MKL", "CUDA")
@@ -413,7 +413,7 @@ def save_environment_report(output_path: str = "./environment_report.json"):
 
 ```
 # requirements.txt
-# SwarmResearch Benchmark v1.0.0
+# autoconstitution Benchmark v1.0.0
 # Generated: 2024-XX-XX
 # Python: 3.11.x
 
@@ -458,7 +458,7 @@ click==8.1.7
 joblib==1.3.2
 
 # Benchmark Package
-swarmresearch-benchmark==1.0.0
+autoconstitution-benchmark==1.0.0
 ```
 
 #### requirements-dev.txt
@@ -490,7 +490,7 @@ line-profiler==4.1.1
 
 ```yaml
 # environment.yml
-name: swarmresearch-benchmark
+name: autoconstitution-benchmark
 channels:
   - conda-forge
   - defaults
@@ -505,7 +505,7 @@ dependencies:
   - pip:
     - llama-cpp-python==0.2.90
     - pydantic==2.7.0
-    - swarmresearch-benchmark==1.0.0
+    - autoconstitution-benchmark==1.0.0
 ```
 
 ### 3.3 Lock File Generation
@@ -607,22 +607,22 @@ assets:
   models:
     swarm-agent-small-3B-int8:
       version: "1.0.0"
-      url: "https://models.swarmresearch.org/v1/swarm-agent-small-3B-int8.gguf"
+      url: "https://models.autoconstitution.org/v1/swarm-agent-small-3B-int8.gguf"
       checksum:
         sha256: "f8e2a9c4d1b7..."  # 64 characters
       size_bytes: 3214572800
       
     swarm-agent-medium-7B-int8:
       version: "1.0.0"
-      url: "https://models.swarmresearch.org/v1/swarm-agent-medium-7B-int8.gguf"
+      url: "https://models.autoconstitution.org/v1/swarm-agent-medium-7B-int8.gguf"
       checksum:
         sha256: "a1b2c3d4e5f6..."
       size_bytes: 7500000000
       
   datasets:
-    swarmresearch_bench_v1:
+    autoconstitution_bench_v1:
       version: "1.0.0"
-      url: "https://benchmarks.swarmresearch.org/datasets/v1/swarmresearch_bench_v1.tar.gz"
+      url: "https://benchmarks.autoconstitution.org/datasets/v1/autoconstitution_bench_v1.tar.gz"
       checksum:
         sha256: "a3f7c9e2d8b1..."  # 64 characters
       size_bytes: 262144000  # 250 MB
@@ -644,9 +644,9 @@ assets:
 # Dockerfile
 FROM python:3.11.7-slim-bookworm
 
-LABEL maintainer="SwarmResearch Team"
+LABEL maintainer="autoconstitution Team"
 LABEL version="1.0.0"
-LABEL description="SwarmResearch Benchmark Reproducibility Container"
+LABEL description="autoconstitution Benchmark Reproducibility Container"
 
 # Set environment variables
 ENV PYTHONDONTWRITEBYTECODE=1
@@ -684,10 +684,10 @@ RUN pip install --no-cache-dir -e .
 RUN mkdir -p /benchmark/models /benchmark/datasets /benchmark/results
 
 # Download and verify assets
-RUN python -m swarmresearch.download --verify
+RUN python -m autoconstitution.download --verify
 
 # Set entrypoint
-ENTRYPOINT ["python", "-m", "swarmresearch.benchmark"]
+ENTRYPOINT ["python", "-m", "autoconstitution.benchmark"]
 CMD ["--help"]
 ```
 
@@ -757,8 +757,8 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    image: swarmresearch/benchmark:1.0.0
-    container_name: swarmresearch-benchmark
+    image: autoconstitution/benchmark:1.0.0
+    container_name: autoconstitution-benchmark
     
     environment:
       - SWARMRESEARCH_SEED=42
@@ -796,10 +796,10 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    image: swarmresearch/benchmark:1.0.0
-    container_name: swarmresearch-verify
+    image: autoconstitution/benchmark:1.0.0
+    container_name: autoconstitution-verify
     command: >
-      python -m swarmresearch.verify --full
+      python -m autoconstitution.verify --full
 ```
 
 ### 4.3 Multi-Platform Build
@@ -811,9 +811,9 @@ services:
 set -e
 
 VERSION="1.0.0"
-IMAGE_NAME="swarmresearch/benchmark"
+IMAGE_NAME="autoconstitution/benchmark"
 
-echo "Building SwarmResearch benchmark container..."
+echo "Building autoconstitution benchmark container..."
 
 # Build for multiple platforms
 docker buildx create --use --name swarmbuilder 2>/dev/null || true
@@ -859,7 +859,7 @@ def get_python_version():
 def verify_assets():
     """Verify model and dataset are present."""
     model_path = "/benchmark/models/swarm-agent-small-3B-int8.gguf"
-    dataset_path = "/benchmark/datasets/swarmresearch_bench_v1"
+    dataset_path = "/benchmark/datasets/autoconstitution_bench_v1"
     
     return {
         "model_present": os.path.exists(model_path),
@@ -919,7 +919,7 @@ log_error() { echo -e "${RED}[ERROR]${NC} $1"; }
 SEED=${1:-$DEFAULT_SEED}
 OUTPUT_DIR=${2:-$RESULTS_DIR}
 
-log_info "SwarmResearch Benchmark Reproduction"
+log_info "autoconstitution Benchmark Reproduction"
 log_info "Version: $BENCHMARK_VERSION"
 log_info "Seed: $SEED"
 log_info "Output: $OUTPUT_DIR"
@@ -952,14 +952,14 @@ python -m reproducibility.verify_deps || { log_error "Dependency verification fa
 
 # Step 4: Download Assets
 log_info "Step 4/7: Downloading assets..."
-python -m swarmresearch.download \
+python -m autoconstitution.download \
     --dataset \
     --model \
     --verify || { log_error "Asset download failed"; exit 1; }
 
 # Step 5: Verify Environment
 log_info "Step 5/7: Verifying environment..."
-python -m swarmresearch.verify --full || { log_error "Environment verification failed"; exit 1; }
+python -m autoconstitution.verify --full || { log_error "Environment verification failed"; exit 1; }
 
 # Step 6: Run Benchmark
 log_info "Step 6/7: Running benchmark (this may take 20-30 minutes)..."
@@ -968,7 +968,7 @@ RESULTS_FILE="$OUTPUT_DIR/run_${TIMESTAMP}_seed${SEED}.json"
 
 mkdir -p "$OUTPUT_DIR"
 
-python -m swarmresearch.benchmark \
+python -m autoconstitution.benchmark \
     --config "$CONFIG_FILE" \
     --output "$RESULTS_FILE" \
     --seed "$SEED" \
@@ -976,7 +976,7 @@ python -m swarmresearch.benchmark \
 
 # Step 7: Generate Report
 log_info "Step 7/7: Generating report..."
-python -m swarmresearch.report \
+python -m autoconstitution.report \
     --results "$RESULTS_FILE" \
     --output "$OUTPUT_DIR/report_${TIMESTAMP}.html"
 
@@ -1020,11 +1020,11 @@ log_info "Expected: Identical results (within floating-point tolerance)"
 SEED ?= 42
 OUTPUT_DIR ?= ./results
 CONFIG ?= ./configs/m4_baseline.yaml
-IMAGE_NAME = swarmresearch/benchmark
+IMAGE_NAME = autoconstitution/benchmark
 VERSION = 1.0.0
 
 help: ## Show this help message
-	@echo "SwarmResearch Benchmark - Available Commands:"
+	@echo "autoconstitution Benchmark - Available Commands:"
 	@echo ""
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-20s\033[0m %s\n", $$1, $$2}'
 
@@ -1036,17 +1036,17 @@ setup: ## Set up the environment
 
 download: ## Download models and datasets
 	@echo "Downloading assets..."
-	./venv/bin/python -m swarmresearch.download --dataset --model --verify
+	./venv/bin/python -m autoconstitution.download --dataset --model --verify
 
 verify: ## Verify environment and dependencies
 	@echo "Verifying environment..."
 	./venv/bin/python -m reproducibility.verify_deps
-	./venv/bin/python -m swarmresearch.verify --full
+	./venv/bin/python -m autoconstitution.verify --full
 
 run: ## Run the benchmark (default seed: 42)
 	@echo "Running benchmark with seed $(SEED)..."
 	mkdir -p $(OUTPUT_DIR)
-	./venv/bin/python -m swarmresearch.benchmark \
+	./venv/bin/python -m autoconstitution.benchmark \
 		--config $(CONFIG) \
 		--output $(OUTPUT_DIR)/run_$$(date +%Y%m%d_%H%M%S)_seed$(SEED).json \
 		--seed $(SEED)
@@ -1057,7 +1057,7 @@ reproduce: ## Full reproduction pipeline
 
 report: ## Generate HTML report from results
 	@echo "Generating report..."
-	./venv/bin/python -m swarmresearch.report \
+	./venv/bin/python -m autoconstitution.report \
 		--results $(OUTPUT_DIR)/run_*.json \
 		--output $(OUTPUT_DIR)/report.html
 
@@ -1087,11 +1087,11 @@ docker-run: ## Run benchmark in Docker container
 
 docker-verify: ## Verify Docker environment
 	@echo "Verifying Docker environment..."
-	docker run --rm $(IMAGE_NAME):$(VERSION) python -m swarmresearch.verify --full
+	docker run --rm $(IMAGE_NAME):$(VERSION) python -m autoconstitution.verify --full
 
 # CI/CD targets
 ci-test: setup verify ## Run CI tests
-	./venv/bin/python -m pytest tests/ -v --cov=swarmresearch
+	./venv/bin/python -m pytest tests/ -v --cov=autoconstitution
 
 ci-benchmark: setup download verify run ## Run CI benchmark
 	@echo "CI benchmark complete"
@@ -1136,7 +1136,7 @@ class ReproductionRunner:
     def download_assets(self) -> "ReproductionRunner":
         """Download required assets."""
         subprocess.run(
-            ["python", "-m", "swarmresearch.download", "--dataset", "--model", "--verify"],
+            ["python", "-m", "autoconstitution.download", "--dataset", "--model", "--verify"],
             check=True
         )
         return self
@@ -1144,7 +1144,7 @@ class ReproductionRunner:
     def verify(self) -> "ReproductionRunner":
         """Verify environment."""
         subprocess.run(
-            ["python", "-m", "swarmresearch.verify", "--full"],
+            ["python", "-m", "autoconstitution.verify", "--full"],
             check=True
         )
         return self
@@ -1157,7 +1157,7 @@ class ReproductionRunner:
         results_file = self.output_dir / f"run_{timestamp}_seed{self.seed}.json"
         
         subprocess.run([
-            "python", "-m", "swarmresearch.benchmark",
+            "python", "-m", "autoconstitution.benchmark",
             "--config", str(self.config_path),
             "--output", str(results_file),
             "--seed", str(self.seed)
@@ -1177,7 +1177,7 @@ class ReproductionRunner:
         report_file = self.output_dir / f"report_{self.results['run_timestamp'][:19].replace(':', '')}.html"
         
         subprocess.run([
-            "python", "-m", "swarmresearch.report",
+            "python", "-m", "autoconstitution.report",
             "--results", str(self.output_dir / "run_*.json"),
             "--output", str(report_file)
         ], check=True)
@@ -1233,7 +1233,7 @@ def reproduce(
 if __name__ == "__main__":
     import argparse
     
-    parser = argparse.ArgumentParser(description="SwarmResearch Benchmark Reproduction")
+    parser = argparse.ArgumentParser(description="autoconstitution Benchmark Reproduction")
     parser.add_argument("--seed", type=int, default=42, help="Random seed")
     parser.add_argument("--output", default="./results", help="Output directory")
     parser.add_argument("--config", default="./configs/m4_baseline.yaml", help="Config file")
@@ -1263,7 +1263,7 @@ import numpy as np
 def run_benchmark(seed: int, output_dir: Path) -> Path:
     """Run benchmark with given seed and return results path."""
     result = subprocess.run([
-        "python", "-m", "swarmresearch.benchmark",
+        "python", "-m", "autoconstitution.benchmark",
         "--config", "./configs/m4_baseline.yaml",
         "--output", str(output_dir),
         "--seed", str(seed)
@@ -1430,11 +1430,11 @@ jobs:
       
       - name: Download assets
         run: |
-          python -m swarmresearch.download --dataset --model --verify
+          python -m autoconstitution.download --dataset --model --verify
       
       - name: Run benchmark
         run: |
-          python -m swarmresearch.benchmark \
+          python -m autoconstitution.benchmark \
             --config configs/m4_baseline.yaml \
             --output results/ \
             --seed ${{ matrix.seed }}
@@ -1485,20 +1485,20 @@ jobs:
 export SWARMRESEARCH_LOG_LEVEL=DEBUG
 
 # Run with debug output
-python -m swarmresearch.benchmark --config configs/m4_baseline.yaml --verbose
+python -m autoconstitution.benchmark --config configs/m4_baseline.yaml --verbose
 
 # Verify specific component
-python -m swarmresearch.verify --component seeds
-python -m swarmresearch.verify --component dependencies
-python -m swarmresearch.verify --component assets
+python -m autoconstitution.verify --component seeds
+python -m autoconstitution.verify --component dependencies
+python -m autoconstitution.verify --component assets
 ```
 
 ### 7.3 Support Resources
 
-- **Documentation**: https://docs.swarmresearch.org
-- **Issue Tracker**: https://github.com/swarmresearch/benchmark/issues
-- **Discussions**: https://github.com/swarmresearch/benchmark/discussions
-- **Email**: benchmark@swarmresearch.org
+- **Documentation**: https://docs.autoconstitution.org
+- **Issue Tracker**: https://github.com/autoconstitution/benchmark/issues
+- **Discussions**: https://github.com/autoconstitution/benchmark/discussions
+- **Email**: benchmark@autoconstitution.org
 
 ---
 
@@ -1511,7 +1511,7 @@ python -m swarmresearch.verify --component assets
 ./reproduce.sh
 
 # Docker execution
-docker run -v $(PWD)/results:/benchmark/results swarmresearch/benchmark:1.0.0
+docker run -v $(PWD)/results:/benchmark/results autoconstitution/benchmark:1.0.0
 
 # Makefile
 make reproduce
@@ -1551,4 +1551,4 @@ python -c "from reproducibility.api import reproduce; reproduce()"
 
 ---
 
-*End of SwarmResearch Benchmark Reproducibility Protocol*
+*End of autoconstitution Benchmark Reproducibility Protocol*

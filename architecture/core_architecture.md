@@ -1,8 +1,8 @@
-# SwarmResearch System Architecture
+# autoconstitution System Architecture
 
 ## Executive Summary
 
-SwarmResearch is a massively parallel collaborative AI research system designed to orchestrate hundreds of AI agents across multiple LLM providers. The architecture follows a **layered, message-driven design** that scales from a single Mac Mini M4 to an H100 GPU cluster while maintaining clean separation of concerns and Karpathy's minimalist philosophy.
+autoconstitution is a massively parallel collaborative AI research system designed to orchestrate hundreds of AI agents across multiple LLM providers. The architecture follows a **layered, message-driven design** that scales from a single Mac Mini M4 to an H100 GPU cluster while maintaining clean separation of concerns and Karpathy's minimalist philosophy.
 
 ---
 
@@ -680,7 +680,7 @@ spec:
 │  │  data.py      - Data loading, preprocessing, batching               │    │
 │  └─────────────────────────────────────────────────────────────────────┘    │
 │                                                                              │
-│  SwarmResearch Extension:                                                    │
+│  autoconstitution Extension:                                                    │
 │  ┌─────────────────────────────────────────────────────────────────────┐    │
 │  │  agent_worker.py      ←→  train.py  (core execution loop)           │    │
 │  │  swarm_manager.py     ←→  model.py  (orchestration topology)        │    │
@@ -1230,7 +1230,7 @@ services:
 
   worker:
     build: .
-    command: celery -A swarmresearch worker --loglevel=info
+    command: celery -A autoconstitution worker --loglevel=info
     environment:
       - REDIS_URL=redis://redis:6379
       - DATABASE_URL=sqlite:///data/swarm.db
@@ -1283,7 +1283,7 @@ spec:
     spec:
       containers:
         - name: api
-          image: swarmresearch/api:latest
+          image: autoconstitution/api:latest
           ports:
             - containerPort: 8000
           envFrom:
@@ -1432,7 +1432,7 @@ spec:
 ## Appendix A: File Structure
 
 ```
-swarmresearch/
+autoconstitution/
 ├── core/                           # Core 3 files (Karpathy style)
 │   ├── __init__.py
 │   ├── swarm_manager.py           # ~400 lines
@@ -1569,4 +1569,4 @@ swarmresearch/
 
 *Document Version: 1.0*  
 *Last Updated: 2024*  
-*Author: SwarmResearch Architecture Team*
+*Author: autoconstitution Architecture Team*

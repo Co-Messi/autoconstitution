@@ -1,5 +1,5 @@
 """
-Centralized seed management for SwarmResearch benchmark.
+Centralized seed management for autoconstitution benchmark.
 
 This module provides deterministic random seed management to ensure
 complete reproducibility across benchmark runs.
@@ -239,7 +239,7 @@ def get_seed_summary() -> Dict[str, any]:
 
 if __name__ == "__main__":
     # Run verification when executed directly
-    print("SwarmResearch Benchmark Seed Management")
+    print("autoconstitution Benchmark Seed Management")
     print("=" * 50)
     print()
     

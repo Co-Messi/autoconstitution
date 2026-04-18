@@ -1,8 +1,8 @@
-# SwarmResearch Security Architecture
+# autoconstitution Security Architecture
 
 ## Executive Summary
 
-This document outlines the comprehensive security model for SwarmResearch, a multi-agent AI system designed for automated experimentation. The architecture implements defense-in-depth principles with multiple layers of protection including sandboxing, agent isolation, resource controls, code validation, and comprehensive audit logging.
+This document outlines the comprehensive security model for autoconstitution, a multi-agent AI system designed for automated experimentation. The architecture implements defense-in-depth principles with multiple layers of protection including sandboxing, agent isolation, resource controls, code validation, and comprehensive audit logging.
 
 ---
 
@@ -99,7 +99,7 @@ spec:
       type: RuntimeDefault
   containers:
   - name: experiment-runner
-    image: swarmresearch/sandbox:latest
+    image: autoconstitution/sandbox:latest
     securityContext:
       allowPrivilegeEscalation: false
       readOnlyRootFilesystem: true
@@ -537,7 +537,7 @@ apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
   name: agent-isolation
-  namespace: swarmresearch
+  namespace: autoconstitution
 spec:
   podSelector:
     matchLabels:
@@ -583,7 +583,7 @@ apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
   name: sandbox-deny-all
-  namespace: swarmresearch
+  namespace: autoconstitution
 spec:
   podSelector:
     matchLabels:
@@ -601,7 +601,7 @@ spec:
 ### 5.1 Cgroup v2 Configuration
 
 ```
-# /sys/fs/cgroup/swarmresearch/
+# /sys/fs/cgroup/autoconstitution/
 # ├── agents/
 # │   ├── agent-a/
 # │   │   ├── experiments/
@@ -617,7 +617,7 @@ spec:
 #!/bin/bash
 # setup-cgroups.sh
 
-CGROUP_BASE="/sys/fs/cgroup/swarmresearch"
+CGROUP_BASE="/sys/fs/cgroup/autoconstitution"
 
 # Create hierarchy
 mkdir -p "$CGROUP_BASE/agents"
@@ -683,7 +683,7 @@ apiVersion: v1
 kind: ResourceQuota
 metadata:
   name: agent-quota
-  namespace: swarmresearch
+  namespace: autoconstitution
 spec:
   hard:
     requests.cpu: "20"
@@ -699,7 +699,7 @@ apiVersion: v1
 kind: LimitRange
 metadata:
   name: agent-limits
-  namespace: swarmresearch
+  namespace: autoconstitution
 spec:
   limits:
   - default:
@@ -838,7 +838,7 @@ class ResourceMonitor:
         import signal
         import os
         
-        cgroup_procs = f"/sys/fs/cgroup/swarmresearch/agents/{agent_id}/cgroup.procs"
+        cgroup_procs = f"/sys/fs/cgroup/autoconstitution/agents/{agent_id}/cgroup.procs"
         try:
             with open(cgroup_procs) as f:
                 for line in f:
@@ -854,7 +854,7 @@ class ResourceMonitor:
     
     async def _throttle_agent(self, agent_id: str):
         """Reduce agent CPU priority."""
-        cpu_max = f"/sys/fs/cgroup/swarmresearch/agents/{agent_id}/cpu.max"
+        cpu_max = f"/sys/fs/cgroup/autoconstitution/agents/{agent_id}/cpu.max"
         try:
             with open(cpu_max, "w") as f:
                 f.write("50000 100000")  # Reduce to 50% CPU
@@ -1339,7 +1339,7 @@ CMD ["strace", "-f", "-e", "trace=all", "-o", "/tmp/strace.log", "python", "scri
 ```json
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "title": "SwarmResearch Audit Event",
+  "title": "autoconstitution Audit Event",
   "type": "object",
   "required": ["event_id", "timestamp", "event_type", "severity", "actor"],
   "properties": {
@@ -1967,8 +1967,8 @@ class AuditQueryEngine:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: swarmresearch-control
-  namespace: swarmresearch
+  name: autoconstitution-control
+  namespace: autoconstitution
 spec:
   replicas: 3
   selector:
@@ -1979,7 +1979,7 @@ spec:
       labels:
         app: control-plane
     spec:
-      serviceAccountName: swarmresearch-control
+      serviceAccountName: autoconstitution-control
       securityContext:
         runAsNonRoot: true
         runAsUser: 1000
@@ -1989,7 +1989,7 @@ spec:
           type: RuntimeDefault
       containers:
       - name: control-plane
-        image: swarmresearch/control:latest
+        image: autoconstitution/control:latest
         securityContext:
           allowPrivilegeEscalation: false
           readOnlyRootFilesystem: true
@@ -2014,13 +2014,13 @@ spec:
         emptyDir: {}
       - name: config
         configMap:
-          name: swarmresearch-config
+          name: autoconstitution-config
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
-  name: swarmresearch-control
-  namespace: swarmresearch
+  name: autoconstitution-control
+  namespace: autoconstitution
 rules:
 - apiGroups: [""]
   resources: ["pods", "services", "configmaps", "secrets"]
@@ -2035,15 +2035,15 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
-  name: swarmresearch-control
-  namespace: swarmresearch
+  name: autoconstitution-control
+  namespace: autoconstitution
 subjects:
 - kind: ServiceAccount
-  name: swarmresearch-control
-  namespace: swarmresearch
+  name: autoconstitution-control
+  namespace: autoconstitution
 roleRef:
   kind: Role
-  name: swarmresearch-control
+  name: autoconstitution-control
   apiGroup: rbac.authorization.k8s.io
 ```
 
@@ -2054,7 +2054,7 @@ roleRef:
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: swarmresearch
+  name: autoconstitution
   labels:
     pod-security.kubernetes.io/enforce: restricted
     pod-security.kubernetes.io/audit: restricted
@@ -2071,7 +2071,7 @@ metadata:
 ```yaml
 # prometheus-alerts.yaml
 groups:
-- name: swarmresearch-security
+- name: autoconstitution-security
   rules:
   # High rate of blocked actions
   - alert: HighBlockedActionRate
@@ -2275,7 +2275,7 @@ class IncidentResponder:
             "kind": "NetworkPolicy",
             "metadata": {
                 "name": f"isolate-{agent_id}",
-                "namespace": "swarmresearch"
+                "namespace": "autoconstitution"
             },
             "spec": {
                 "podSelector": {
@@ -2289,7 +2289,7 @@ class IncidentResponder:
     async def _kill_agent(self, agent_id: str):
         """Kill all agent processes."""
         await self.k8s.delete_pod(
-            namespace="swarmresearch",
+            namespace="autoconstitution",
             label_selector=f"agent-id={agent_id}"
         )
     
@@ -2392,7 +2392,7 @@ See section 3.3 for the base profile. Additional rules for specific workloads:
 ```
 #include <tunables/global>
 
-profile swarmresearch-sandbox flags=(attach_disconnected,mediate_deleted) {
+profile autoconstitution-sandbox flags=(attach_disconnected,mediate_deleted) {
   #include <abstractions/base>
   
   # Deny dangerous capabilities

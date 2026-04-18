@@ -1,8 +1,8 @@
-# SwarmResearch Observability System Design
+# autoconstitution Observability System Design
 
 ## Executive Summary
 
-This document defines the comprehensive observability architecture for SwarmResearch, a massively parallel multi-agent AI research system. The observability system provides deep visibility into agent behavior, system performance, research progress, and operational health across all deployment tiers—from a single Mac Mini M4 to H100 GPU clusters.
+This document defines the comprehensive observability architecture for autoconstitution, a massively parallel multi-agent AI research system. The observability system provides deep visibility into agent behavior, system performance, research progress, and operational health across all deployment tiers—from a single Mac Mini M4 to H100 GPU clusters.
 
 ---
 
@@ -105,9 +105,9 @@ from contextlib import contextmanager
 import time
 
 class SwarmMetricsCollector:
-    """Centralized metrics collection for SwarmResearch."""
+    """Centralized metrics collection for autoconstitution."""
     
-    def __init__(self, service_name: str = "swarm-research"):
+    def __init__(self, service_name: str = "autoconstitution"):
         self.service_name = service_name
         self.registry = CollectorRegistry()
         self._init_metrics()
@@ -218,7 +218,7 @@ class SwarmMetricsCollector:
   "timestamp": "2024-01-15T10:30:00.123Z",
   "level": "INFO",
   "logger": "swarm.agent_worker",
-  "service": "swarm-research",
+  "service": "autoconstitution",
   "version": "1.2.3",
   "environment": "production",
   "trace_id": "abc123def456",
@@ -253,7 +253,7 @@ import logging
 import sys
 
 def configure_logging(level: str = "INFO", environment: str = "production"):
-    """Configure structured logging for SwarmResearch."""
+    """Configure structured logging for autoconstitution."""
     logging.basicConfig(format="%(message)s", stream=sys.stdout, level=getattr(logging, level))
     
     shared_processors = [
@@ -381,9 +381,9 @@ from opentelemetry.trace.propagation.tracecontext import TraceContextTextMapProp
 from contextlib import contextmanager
 
 class SwarmTracing:
-    """Distributed tracing configuration for SwarmResearch."""
+    """Distributed tracing configuration for autoconstitution."""
     
-    def __init__(self, service_name: str = "swarm-research", otlp_endpoint: str = "http://localhost:4317", sampling_rate: float = 1.0):
+    def __init__(self, service_name: str = "autoconstitution", otlp_endpoint: str = "http://localhost:4317", sampling_rate: float = 1.0):
         self.service_name = service_name
         set_global_textmap(CompositePropagator([TraceContextTextMapPropagator()]))
         
@@ -525,7 +525,7 @@ Key panels:
 ### 5.2 Custom Research Visualizations
 
 ```python
-# Custom Grafana panels for SwarmResearch
+# Custom Grafana panels for autoconstitution
 
 KNOWLEDGE_GRAPH_PANEL = {
     "type": "nodeGraph",
@@ -677,7 +677,7 @@ groups:
 # alertmanager_config.yaml
 global:
   smtp_smarthost: 'smtp.example.com:587'
-  smtp_from: 'alerts@swarmresearch.io'
+  smtp_from: 'alerts@autoconstitution.io'
   slack_api_url: '${SLACK_WEBHOOK_URL}'
 
 route:
@@ -703,7 +703,7 @@ route:
 receivers:
   - name: 'default'
     email_configs:
-      - to: 'oncall@swarmresearch.io'
+      - to: 'oncall@autoconstitution.io'
   
   - name: 'pagerduty-critical'
     pagerduty_configs:
@@ -752,7 +752,7 @@ class RemediationResult:
     context: dict
 
 class AutoRemediation:
-    """Auto-remediation system for SwarmResearch alerts."""
+    """Auto-remediation system for autoconstitution alerts."""
     
     def __init__(self, orchestrator):
         self.orchestrator = orchestrator
@@ -913,7 +913,7 @@ class AutoRemediation:
 
 ## 9. Summary
 
-This observability design provides a comprehensive framework for monitoring, logging, tracing, and alerting in the SwarmResearch multi-agent AI research system. Key components include:
+This observability design provides a comprehensive framework for monitoring, logging, tracing, and alerting in the autoconstitution multi-agent AI research system. Key components include:
 
 1. **Metrics Collection**: Prometheus-based metrics with custom instruments for agent performance, provider health, and research progress
 

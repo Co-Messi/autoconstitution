@@ -29,10 +29,24 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
+from collections.abc import AsyncIterator, Awaitable, Callable
 from dataclasses import dataclass, field
-from typing import Any, Optional
+from typing import Any, Literal
 
 from autoconstitution.cai.hierarchy import JudgeAgent, StudentAgent
+from autoconstitution.ui.events import (
+    Critique,
+    Event,
+    LoopError,
+    Revision,
+    Role,
+    RoleEnd,
+    RoleStart,
+    RoundEnd,
+    RoundStart,
+    Token,
+)
+from autoconstitution.ui.protocol import Renderer
 
 logger = logging.getLogger(__name__)
 
@@ -47,7 +61,7 @@ class CritiqueResult:
     raw_response: str = ""
 
     @classmethod
-    def from_judge_output(cls, round_num: int, raw: str) -> "CritiqueResult":
+    def from_judge_output(cls, round_num: int, raw: str) -> CritiqueResult:
         """Parse a Judge's JSON-ish output into a structured verdict.
 
         The Judge is instructed to return JSON, but real models sometimes wrap
@@ -128,9 +142,41 @@ class CritiqueRevisionLoop:
         self.max_rounds = max_rounds
         self.skip_identical_revisions = skip_identical_revisions
 
-    async def run(self, prompt: str) -> RevisionResult:
-        """Run the loop for a single prompt. Returns full trace."""
-        initial_answer = await self.student.respond(prompt)
+    async def run(
+        self,
+        prompt: str,
+        *,
+        renderer: Renderer | None = None,
+    ) -> RevisionResult:
+        """Run the loop for a single prompt. Returns full trace.
+
+        Args:
+            prompt: The user prompt to answer.
+            on_event: Optional callback invoked for every lifecycle event.
+                Renderers (live dashboard, line logger, JSON emitter) plug in
+                here without the loop needing to know how they display.
+        """
+        emit = _make_emitter(renderer)
+
+        streaming = bool(renderer and renderer.supports_streaming)
+
+        emit(RoundStart(round=1, prompt=prompt))
+
+        async def _student_respond() -> str:
+            return await self.student.respond(prompt)
+
+        def _student_respond_stream() -> AsyncIterator[str]:
+            return self.student.respond_stream(prompt)
+
+        initial_answer = await _run_role(
+            emit,
+            role="student",
+            round_num=1,
+            streaming=streaming,
+            complete=_student_respond,
+            stream=_student_respond_stream,
+        )
+
         current_answer = initial_answer
         critiques: list[CritiqueResult] = []
         converged = False
@@ -138,32 +184,88 @@ class CritiqueRevisionLoop:
 
         for round_num in range(1, self.max_rounds + 1):
             rounds_used = round_num
-            raw_critique = await self.judge.critique(prompt, current_answer)
+
+            async def _judge_complete(ca: str = current_answer) -> str:
+                return await self.judge.critique(prompt, ca)
+
+            def _judge_stream(ca: str = current_answer) -> AsyncIterator[str]:
+                return self.judge.critique_stream(prompt, ca)
+
+            raw_critique = await _run_role(
+                emit,
+                role="judge",
+                round_num=round_num,
+                streaming=streaming,
+                complete=_judge_complete,
+                stream=_judge_stream,
+            )
             critique = CritiqueResult.from_judge_output(round_num, raw_critique)
             critiques.append(critique)
+            norm_verdict = _normalize_verdict(critique.verdict)
+            emit(
+                Critique(
+                    round=round_num,
+                    verdict=norm_verdict,
+                    critique_count=len(critique.critiques),
+                    raw=raw_critique,
+                )
+            )
 
-            if critique.verdict == "compliant":
+            if norm_verdict == "compliant":
                 converged = True
                 logger.info("converged after %d rounds", round_num)
+                emit(RoundEnd(round=round_num, converged=True))
                 break
 
-            if critique.verdict == "parse_error":
-                logger.warning("judge output failed to parse on round %d", round_num)
-                break
+            if norm_verdict == "parse_error":
+                # Don't abandon the case on one bad JSON — small judges often
+                # recover on retry. Retry the judge next round against the same
+                # answer; max_rounds still bounds total work.
+                logger.warning("judge output failed to parse on round %d; retrying", round_num)
+                emit(RoundEnd(round=round_num, converged=False))
+                continue
 
             # Ask Student to revise given critiques.
             critique_text = self._format_critiques(critique.critiques)
-            revised = await self.student.revise(
-                prompt=prompt,
-                previous_answer=current_answer,
-                critique=critique_text,
+
+            async def _student_revise(
+                ca: str = current_answer, ct: str = critique_text
+            ) -> str:
+                return await self.student.revise(
+                    prompt=prompt, previous_answer=ca, critique=ct,
+                )
+
+            def _student_revise_stream(
+                ca: str = current_answer, ct: str = critique_text
+            ) -> AsyncIterator[str]:
+                return self.student.revise_stream(prompt, ca, ct)
+
+            revised = await _run_role(
+                emit,
+                role="student",
+                round_num=round_num,
+                streaming=streaming,
+                complete=_student_revise,
+                stream=_student_revise_stream,
             )
 
-            if self.skip_identical_revisions and revised.strip() == current_answer.strip():
+            identical = revised.strip() == current_answer.strip()
+            emit(
+                Revision(
+                    round=round_num,
+                    before=current_answer,
+                    after=revised,
+                    identical=identical,
+                )
+            )
+
+            if self.skip_identical_revisions and identical:
                 logger.info("revision identical to previous answer; stopping")
+                emit(RoundEnd(round=round_num, converged=False))
                 break
 
             current_answer = revised
+            emit(RoundEnd(round=round_num, converged=False))
 
         return RevisionResult(
             prompt=prompt,
@@ -179,14 +281,37 @@ class CritiqueRevisionLoop:
         prompts: list[str],
         *,
         concurrency: int = 4,
-    ) -> list[RevisionResult]:
-        """Run the loop across a batch of prompts with bounded concurrency."""
+        renderer: Renderer | None = None,
+        return_exceptions: bool = False,
+    ) -> list[RevisionResult] | list[RevisionResult | BaseException]:
+        """Run the loop across a batch of prompts with bounded concurrency.
+
+        Args:
+            prompts: Prompts to process.
+            concurrency: Maximum parallel loops.
+            renderer: Optional renderer, invoked per-event across all prompts.
+                Note: events from concurrent runs are interleaved, so filter by
+                ``prompt`` / ``round`` if you need per-run timelines.
+            return_exceptions: When True, failed runs appear in the result list
+                as ``BaseException`` instances (matches ``asyncio.gather``).
+                When False, the first exception aborts the batch.
+
+        Returns:
+            A list the same length as ``prompts``. Each entry is either a
+            :class:`RevisionResult` (success) or a ``BaseException`` (only when
+            ``return_exceptions=True``).
+        """
         semaphore = asyncio.Semaphore(concurrency)
 
         async def _bounded(p: str) -> RevisionResult:
             async with semaphore:
-                return await self.run(p)
+                return await self.run(p, renderer=renderer)
 
+        if return_exceptions:
+            return await asyncio.gather(
+                *(_bounded(p) for p in prompts),
+                return_exceptions=True,
+            )
         return await asyncio.gather(*(_bounded(p) for p in prompts))
 
     @staticmethod
@@ -201,3 +326,77 @@ class CritiqueRevisionLoop:
             severity = c.get("severity", "moderate")
             lines.append(f"- [{principle}] ({severity}) Offending: {quote!r} → Fix: {fix}")
         return "\n".join(lines)
+
+
+async def _run_role(
+    emit: _Emitter,
+    *,
+    role: Role,
+    round_num: int,
+    streaming: bool,
+    complete: Callable[[], Awaitable[str]],
+    stream: Callable[[], AsyncIterator[str]],
+) -> str:
+    """Run one role's turn. Emits RoleStart, per-token events (if streaming),
+    and RoleEnd. Provider errors are surfaced as LoopError before re-raising.
+    """
+    emit(RoleStart(role=role, round=round_num))
+    try:
+        if streaming:
+            chunks: list[str] = []
+            async for chunk in stream():
+                if chunk:
+                    emit(Token(role=role, round=round_num, text=chunk))
+                    chunks.append(chunk)
+            output = "".join(chunks)
+        else:
+            output = await complete()
+    except Exception as exc:  # noqa: BLE001
+        emit(LoopError(round=round_num, role=role, message=str(exc)))
+        raise
+    emit(RoleEnd(role=role, round=round_num, output=output))
+    return output
+
+
+def _make_emitter(renderer: Renderer | None) -> _Emitter:
+    """Return a safe event emitter that swallows renderer exceptions.
+
+    A buggy renderer must never break the loop — this wraps
+    ``renderer.on_event`` in a try/except and logs rather than re-raises. If
+    ``renderer`` is None we return a no-op, so the fast path has zero overhead
+    and no branching on every event.
+    """
+    if renderer is None:
+        return _noop_emit
+
+    def _emit(event: Event) -> None:
+        try:
+            renderer.on_event(event)
+        except Exception:  # noqa: BLE001 - isolate renderer bugs from loop
+            logger.exception("event sink raised for %s", type(event).__name__)
+
+    return _emit
+
+
+_Emitter = Callable[[Event], None]
+
+
+def _noop_emit(event: Event) -> None:  # noqa: ARG001 - sink interface
+    """Null emitter used when no renderer is registered."""
+
+
+def _normalize_verdict(
+    verdict: str,
+) -> Literal["compliant", "needs_revision", "parse_error"]:
+    """Coerce arbitrary verdict strings into the three expected values.
+
+    Local judges emit casing/spacing variants ("Compliant", "needs revision",
+    "needs-revision"); normalize before comparing so we don't silently drop
+    valid verdicts as parse_error.
+    """
+    key = verdict.strip().lower().replace(" ", "_").replace("-", "_")
+    if key == "compliant":
+        return "compliant"
+    if key == "needs_revision":
+        return "needs_revision"
+    return "parse_error"

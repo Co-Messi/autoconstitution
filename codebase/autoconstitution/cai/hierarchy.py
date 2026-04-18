@@ -22,12 +22,13 @@ Example:
 from __future__ import annotations
 
 import enum
+from collections.abc import AsyncIterator
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Optional, Protocol
+from typing import Any, Protocol
 
 
-class CAIRole(str, enum.Enum):
+class CAIRole(enum.StrEnum):
     """The three tiers in a CAI hierarchy."""
 
     STUDENT = "student"
@@ -41,11 +42,26 @@ class LLMProvider(Protocol):
     async def complete(
         self,
         prompt: str,
-        system: Optional[str] = None,
+        system: str | None = None,
         temperature: float = 0.7,
         max_tokens: int = 2048,
     ) -> str:
         """Return the model's completion for ``prompt`` given an optional system prompt."""
+        ...
+
+    def stream(
+        self,
+        prompt: str,
+        system: str | None = None,
+        temperature: float = 0.7,
+        max_tokens: int = 2048,
+    ) -> AsyncIterator[str]:
+        """Yield text chunks as the model produces them.
+
+        Callers that want whole-message output should prefer :meth:`complete`.
+        Renderers that want per-token animation iterate this. Implementations
+        that can't stream natively may yield the whole response as one chunk.
+        """
         ...
 
 
@@ -143,8 +159,17 @@ class _AgentBase:
             max_tokens=overrides.get("max_tokens", self.max_tokens),
         )
 
+    def _stream(self, user_prompt: str, **overrides: Any) -> AsyncIterator[str]:
+        """Stream chunks from the provider. Caller joins chunks into full output."""
+        return self.provider.stream(
+            prompt=user_prompt,
+            system=self.system_prompt,
+            temperature=overrides.get("temperature", self.temperature),
+            max_tokens=overrides.get("max_tokens", self.max_tokens),
+        )
 
-def _load_constitution(constitution_path: Optional[Path] = None) -> str:
+
+def _load_constitution(constitution_path: Path | None = None) -> str:
     """Load the constitution markdown. Falls back to a minimal embedded default.
 
     This avoids a hard dependency on an installed `constitution.md`, which matters
@@ -181,7 +206,7 @@ class StudentAgent(_AgentBase):
         *,
         temperature: float = 0.7,
         max_tokens: int = 2048,
-        system_override: Optional[str] = None,
+        system_override: str | None = None,
     ) -> None:
         super().__init__(
             provider=provider,
@@ -195,9 +220,13 @@ class StudentAgent(_AgentBase):
         """Generate an answer to ``prompt``."""
         return await self._ask(prompt, **kwargs)
 
-    async def revise(self, prompt: str, previous_answer: str, critique: str, **kwargs: Any) -> str:
-        """Revise an answer given a Judge's critique."""
-        revision_prompt = (
+    def respond_stream(self, prompt: str, **kwargs: Any) -> AsyncIterator[str]:
+        """Stream tokens for an answer to ``prompt``."""
+        return self._stream(prompt, **kwargs)
+
+    @staticmethod
+    def _revision_prompt(prompt: str, previous_answer: str, critique: str) -> str:
+        return (
             f"Original question:\n{prompt}\n\n"
             f"Your previous answer:\n{previous_answer}\n\n"
             f"The Judge's critique:\n{critique}\n\n"
@@ -205,7 +234,16 @@ class StudentAgent(_AgentBase):
             f"acknowledge the critique or the revision process — just produce the "
             f"better answer."
         )
-        return await self._ask(revision_prompt, **kwargs)
+
+    async def revise(self, prompt: str, previous_answer: str, critique: str, **kwargs: Any) -> str:
+        """Revise an answer given a Judge's critique."""
+        return await self._ask(self._revision_prompt(prompt, previous_answer, critique), **kwargs)
+
+    def revise_stream(
+        self, prompt: str, previous_answer: str, critique: str, **kwargs: Any
+    ) -> AsyncIterator[str]:
+        """Stream tokens for a revision given a critique."""
+        return self._stream(self._revision_prompt(prompt, previous_answer, critique), **kwargs)
 
 
 class JudgeAgent(_AgentBase):
@@ -215,7 +253,7 @@ class JudgeAgent(_AgentBase):
         self,
         provider: LLMProvider,
         *,
-        constitution_path: Optional[Path] = None,
+        constitution_path: Path | None = None,
         temperature: float = 0.2,  # judges should be low-variance
         max_tokens: int = 2048,
     ) -> None:
@@ -229,14 +267,23 @@ class JudgeAgent(_AgentBase):
         )
         self._constitution = constitution
 
-    async def critique(self, prompt: str, answer: str, **kwargs: Any) -> str:
-        """Return a critique of the Student's ``answer`` to ``prompt``."""
-        critique_prompt = (
+    @staticmethod
+    def _critique_prompt(prompt: str, answer: str) -> str:
+        return (
             f"--- PROMPT ---\n{prompt}\n\n"
             f"--- STUDENT ANSWER ---\n{answer}\n\n"
             f"Critique the Student answer. Return JSON as specified."
         )
-        return await self._ask(critique_prompt, **kwargs)
+
+    async def critique(self, prompt: str, answer: str, **kwargs: Any) -> str:
+        """Return a critique of the Student's ``answer`` to ``prompt``."""
+        return await self._ask(self._critique_prompt(prompt, answer), **kwargs)
+
+    def critique_stream(
+        self, prompt: str, answer: str, **kwargs: Any
+    ) -> AsyncIterator[str]:
+        """Stream tokens for a critique."""
+        return self._stream(self._critique_prompt(prompt, answer), **kwargs)
 
 
 class MetaJudgeAgent(_AgentBase):
@@ -246,7 +293,7 @@ class MetaJudgeAgent(_AgentBase):
         self,
         provider: LLMProvider,
         *,
-        constitution_path: Optional[Path] = None,
+        constitution_path: Path | None = None,
         temperature: float = 0.1,
         max_tokens: int = 4096,
     ) -> None:

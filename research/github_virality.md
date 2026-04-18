@@ -19,7 +19,7 @@ Andrej Karpathy's autoresearch repository achieved unprecedented viral velocity 
 | Current stars | 71.7k+ | ~70k (3 years) | ~55k |
 | Forks/Contributor Ratio | 1,085:1 | 263:1 | 146:1 |
 
-This report analyzes the specific factors that drove this explosive growth and provides actionable recommendations for SwarmResearch.
+This report analyzes the specific factors that drove this explosive growth and provides actionable recommendations for autoconstitution.
 
 ---
 
@@ -358,16 +358,16 @@ Karpathy linked to these directly from the README, creating:
 
 ---
 
-## 8. Recommendations for SwarmResearch Launch
+## 8. Recommendations for autoconstitution Launch
 
 ### 8.1 Apply the Proven Formula
 
-Based on autoresearch's success, SwarmResearch should:
+Based on autoresearch's success, autoconstitution should:
 
 #### A. README Structure
 
 ```markdown
-# SwarmResearch
+# autoconstitution
 
 > [Sci-fi opening hook - 2-3 sentences from the future]
 
@@ -396,7 +396,7 @@ Based on autoresearch's success, SwarmResearch should:
 
 Make it concrete and time-bound:
 
-- ❌ "SwarmResearch enables multi-agent autonomous research"
+- ❌ "autoconstitution enables multi-agent autonomous research"
 - ✅ "Launch 10 research agents, wake up to a synthesized report"
 
 #### C. The Constraint Philosophy
@@ -433,7 +433,7 @@ T+1 week:   Deep-dive blog post
 
 ### 8.4 Specific Tactics That Worked
 
-| Tactic | How to Apply for SwarmResearch |
+| Tactic | How to Apply for autoconstitution |
 |--------|-------------------------------|
 | **The sci-fi prologue** | Write 2-3 sentences from a future where multi-agent research is standard |
 | **The three-file architecture** | Document the minimal set of files users need to understand |
@@ -460,16 +460,16 @@ T+1 week:   Deep-dive blog post
 |---------|---------------|
 | **Pre-launch** | Share with 5-10 trusted community members |
 | **Launch day** | Be available for questions, issues, PRs |
-| **Post-launch** | Curate awesome-swarmresearch list |
+| **Post-launch** | Curate awesome-autoconstitution list |
 | **Ongoing** | Highlight interesting forks and use cases |
 
 ---
 
-## 9. Differentiation Opportunities for SwarmResearch
+## 9. Differentiation Opportunities for autoconstitution
 
 ### 9.1 What Autoresearch Didn't Solve
 
-| Limitation | SwarmResearch Opportunity |
+| Limitation | autoconstitution Opportunity |
 |------------|---------------------------|
 | Single agent only | True multi-agent coordination |
 | No agent-to-agent communication | Structured message passing |
@@ -479,11 +479,11 @@ T+1 week:   Deep-dive blog post
 
 ### 9.2 The Positioning Narrative
 
-> *"Autoresearch showed what one agent can do overnight. SwarmResearch shows what ten agents can do together."*
+> *"Autoresearch showed what one agent can do overnight. autoconstitution shows what ten agents can do together."*
 
 ### 9.3 The Key Differentiator
 
-| Feature | Autoresearch | SwarmResearch |
+| Feature | Autoresearch | autoconstitution |
 |---------|-------------|---------------|
 | Agent count | 1 | N (configurable) |
 | Coordination | None | Structured protocol |
@@ -506,7 +506,7 @@ Karpathy's autoresearch achieved viral success through a combination of:
 7. **Community amplification** (forks, guides, media coverage)
 8. **CEO validation** (Shopify's 19% improvement)
 
-For SwarmResearch to achieve similar trajectory:
+For autoconstitution to achieve similar trajectory:
 
 - **Embrace constraints**—they make the project approachable
 - **Tell a story**—position it as a moment in history
@@ -515,7 +515,7 @@ For SwarmResearch to achieve similar trajectory:
 - **Launch with proof**—have early adopters ready with results
 - **Articulate the vision**—show where this leads next
 
-The autoresearch template works because it respects the user's time, delivers measurable value, and invites community participation. SwarmResearch can build on this foundation by solving the multi-agent coordination problem autoresearch deliberately left unsolved.
+The autoresearch template works because it respects the user's time, delivers measurable value, and invites community participation. autoconstitution can build on this foundation by solving the multi-agent coordination problem autoresearch deliberately left unsolved.
 
 ---
 

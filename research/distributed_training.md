@@ -2,7 +2,7 @@
 
 ## Executive Summary
 
-This report surveys distributed training techniques, federated learning approaches, BOINC/SETI@home architecture, and emerging decentralized AI training projects. It provides architectural patterns and technical requirements for implementing SwarmResearch v0.3-style public compute sharing for AI research.
+This report surveys distributed training techniques, federated learning approaches, BOINC/SETI@home architecture, and emerging decentralized AI training projects. It provides architectural patterns and technical requirements for implementing autoconstitution v0.3-style public compute sharing for AI research.
 
 ---
 
@@ -349,7 +349,7 @@ Phase 2: AllGather
 
 ---
 
-## 6. SwarmResearch v0.3 Architecture Patterns
+## 6. autoconstitution v0.3 Architecture Patterns
 
 ### 6.1 Design Goals for Public Compute Sharing
 
@@ -551,7 +551,7 @@ Combine DP + PP + Compression:
 
 ---
 
-## 8. Recommendations for SwarmResearch v0.3
+## 8. Recommendations for autoconstitution v0.3
 
 ### 8.1 Phase 1: Foundation (Months 1-3)
 
@@ -633,7 +633,7 @@ Distributed training over public compute is technically feasible today, as demon
 
 The main challenge is the 1000x compute gap vs. frontier models. However, with decentralized training growing at 20x/year (vs. 5x/year for centralized), this gap could close within 5-6 years if trends continue.
 
-SwarmResearch v0.3 should focus on:
+autoconstitution v0.3 should focus on:
 - Building a robust, easy-to-use client
 - Starting with smaller models (100M-1B)
 - Implementing strong verification

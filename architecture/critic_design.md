@@ -1,11 +1,11 @@
 # Constitutional Critic Subsystem Design
-## SwarmResearch - Architecture Specification
+## autoconstitution - Architecture Specification
 
 ---
 
 ## Executive Summary
 
-The Constitutional Critic subsystem is a defensive layer in the SwarmResearch architecture designed to prevent degradation of code quality, generalisability, and scientific validity. Critics are specialized agents whose sole purpose is to challenge proposed improvements through structured adversarial analysis.
+The Constitutional Critic subsystem is a defensive layer in the autoconstitution architecture designed to prevent degradation of code quality, generalisability, and scientific validity. Critics are specialized agents whose sole purpose is to challenge proposed improvements through structured adversarial analysis.
 
 **Core Principle**: *Every improvement must earn its place through rigorous critique.*
 

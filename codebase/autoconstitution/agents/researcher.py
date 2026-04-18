@@ -19,11 +19,51 @@ from __future__ import annotations
 import asyncio
 import hashlib
 import json
+import logging
 import re
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum, auto
+
+logger = logging.getLogger(__name__)
+
+
+class IncompletePatchError(ValueError):
+    """Raised when a proposed code change arrives without a real code patch.
+
+    Returning a ``"# TODO: ..."`` string-literal as a patch is a silent bug:
+    downstream code that tries to apply or diff the patch treats the comment
+    as a no-op and succeeds without changing anything. This exception makes
+    the missing-patch case explicit so the caller can drop-with-log or retry
+    with a stricter prompt.
+    """
+
+
+def _extract_patch(
+    content: dict[str, object],
+    key: str,
+    *,
+    kind: str,
+    source_agent: str,
+) -> str:
+    """Pull ``key`` out of an LLM-response dict or raise :class:`IncompletePatchError`.
+
+    The patch must be a non-empty string that does NOT start with the telltale
+    ``"# TODO:"`` marker — older code would use that marker as a placeholder
+    when the real patch was missing, and we treat it the same as missing.
+    """
+    patch = content.get(key)
+    if not isinstance(patch, str) or not patch.strip():
+        raise IncompletePatchError(
+            f"{kind} change proposal from {source_agent!r} had no {key!r} field."
+        )
+    if patch.lstrip().startswith("# TODO:"):
+        raise IncompletePatchError(
+            f"{kind} change proposal from {source_agent!r} shipped a TODO "
+            f"placeholder instead of a real patch: {patch[:80]!r}."
+        )
+    return patch
 from typing import (
     Any,
     AsyncIterator,
@@ -1228,14 +1268,22 @@ class ResearcherAgent(BaseAgent):
         for finding in findings:
             content = finding.content
             target = content.get("target_component", "unknown")
-            
+            try:
+                patch = _extract_patch(
+                    content, "suggested_patch",
+                    kind="optimization", source_agent=finding.source_agent,
+                )
+            except IncompletePatchError as e:
+                logger.warning("dropping optimization change proposal: %s", e)
+                continue
+
             change = CodeChange(
                 id="",
                 description=f"Optimize {target} based on performance analysis",
                 change_type=ChangeType.OPTIMIZATION,
                 priority=ChangePriority.HIGH,
                 target_files=content.get("affected_files", [f"{target}.py"]),
-                code_patch=content.get("suggested_patch", "# TODO: Generate optimization patch"),
+                code_patch=patch,
                 rationale=f"Performance bottleneck identified by {finding.source_agent}",
                 expected_impact={
                     "latency_reduction": content.get("latency_improvement", "unknown"),
@@ -1257,14 +1305,22 @@ class ResearcherAgent(BaseAgent):
         
         for finding in findings:
             content = finding.content
-            
+            try:
+                patch = _extract_patch(
+                    content, "fix_patch",
+                    kind="bug-fix", source_agent=finding.source_agent,
+                )
+            except IncompletePatchError as e:
+                logger.warning("dropping bug-fix change proposal: %s", e)
+                continue
+
             change = CodeChange(
                 id="",
                 description=f"Fix bug: {content.get('bug_description', 'Unknown issue')}",
                 change_type=ChangeType.BUG_FIX,
                 priority=ChangePriority.CRITICAL,
                 target_files=content.get("affected_files", []),
-                code_patch=content.get("fix_patch", "# TODO: Generate fix patch"),
+                code_patch=patch,
                 rationale=f"Bug pattern identified by {finding.source_agent}",
                 expected_impact={
                     "error_reduction": "100% of identified pattern",
@@ -1286,14 +1342,22 @@ class ResearcherAgent(BaseAgent):
         
         for finding in findings:
             content = finding.content
-            
+            try:
+                patch = _extract_patch(
+                    content, "refactoring_patch",
+                    kind="architecture", source_agent=finding.source_agent,
+                )
+            except IncompletePatchError as e:
+                logger.warning("dropping architecture change proposal: %s", e)
+                continue
+
             change = CodeChange(
                 id="",
                 description=f"Architecture improvement: {content.get('recommendation', 'Refactoring')}",
                 change_type=ChangeType.ARCHITECTURE,
                 priority=ChangePriority.MEDIUM,
                 target_files=content.get("affected_files", []),
-                code_patch=content.get("refactoring_patch", "# TODO: Generate refactoring patch"),
+                code_patch=patch,
                 rationale=f"Architecture issue identified by {finding.source_agent}",
                 expected_impact={
                     "maintainability": "improved",
@@ -1315,14 +1379,22 @@ class ResearcherAgent(BaseAgent):
         
         for finding in findings:
             content = finding.content
-            
+            try:
+                patch = _extract_patch(
+                    content, "config_patch",
+                    kind="configuration", source_agent=finding.source_agent,
+                )
+            except IncompletePatchError as e:
+                logger.warning("dropping configuration change proposal: %s", e)
+                continue
+
             change = CodeChange(
                 id="",
                 description=f"Update configuration: {content.get('config_parameter', 'Unknown')}",
                 change_type=ChangeType.CONFIGURATION,
                 priority=ChangePriority.LOW,
                 target_files=content.get("config_files", ["config.yaml"]),
-                code_patch=content.get("config_patch", "# TODO: Generate config patch"),
+                code_patch=patch,
                 rationale=f"Optimal configuration found by {finding.source_agent}",
                 expected_impact={
                     "performance_gain": content.get("performance_gain", "unknown"),
@@ -1343,14 +1415,23 @@ class ResearcherAgent(BaseAgent):
         
         for finding in findings:
             content = finding.content
-            
+            try:
+                patch = _extract_patch(
+                    content, "suggested_patch",
+                    kind=f"generic ({finding.finding_type})",
+                    source_agent=finding.source_agent,
+                )
+            except IncompletePatchError as e:
+                logger.warning("dropping generic change proposal: %s", e)
+                continue
+
             change = CodeChange(
                 id="",
                 description=f"Improvement based on {finding.finding_type}",
                 change_type=ChangeType.REFACTORING,
                 priority=ChangePriority.MEDIUM,
                 target_files=content.get("affected_files", []),
-                code_patch=content.get("suggested_patch", "# TODO: Generate patch"),
+                code_patch=patch,
                 rationale=f"Finding from {finding.source_agent}",
                 expected_impact={"general_improvement": "expected"},
                 hypothesis_ids=[h.id for h in hypotheses],

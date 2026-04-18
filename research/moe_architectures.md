@@ -329,7 +329,7 @@ Discovery_Agent(model, data):
 
 ---
 
-## 6. Implications for SwarmResearch
+## 6. Implications for autoconstitution
 
 ### 6.1 Architecture Search Strategy
 
@@ -394,7 +394,7 @@ Discovery_Agent(model, data):
 
 5. **Critical signals** for MoE benefit include: high activation similarity (need specialization), gradient variance across domains (need separate experts), and entropy collapse (need load balancing)
 
-6. **For SwarmResearch**: Start with dense architectures, monitor training dynamics, introduce sparsity where signals indicate benefit, prefer theoretically-grounded methods
+6. **For autoconstitution**: Start with dense architectures, monitor training dynamics, introduce sparsity where signals indicate benefit, prefer theoretically-grounded methods
 
 ---
 
@@ -412,4 +412,4 @@ Discovery_Agent(model, data):
 
 ---
 
-*Report compiled for SwarmResearch initiative on efficient transformer architectures.*
+*Report compiled for autoconstitution initiative on efficient transformer architectures.*

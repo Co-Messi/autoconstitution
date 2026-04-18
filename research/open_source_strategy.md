@@ -29,7 +29,7 @@ Based on research from Hugging Face and academic studies:
 - **58% of datasets** use OSS licenses despite not being software
 - Permissive licenses (MIT, Apache-2.0) are "traditionally understood to be more permissive, even if their exact application in this novel context is not fully understood"
 
-### 1.2 License Recommendations for SwarmResearch
+### 1.2 License Recommendations for autoconstitution
 
 **Primary Recommendation: MIT License**
 
@@ -82,10 +82,10 @@ ollama/
 └── examples/                # Usage examples
 ```
 
-### 2.2 Recommended Structure for SwarmResearch
+### 2.2 Recommended Structure for autoconstitution
 
 ```
-swarm-research/
+autoconstitution/
 ├── src/
 │   ├── core/               # Core swarm orchestration
 │   │   ├── __init__.py
@@ -359,7 +359,7 @@ swarm-research/
 
 ---
 
-## 6. Specific Recommendations for SwarmResearch
+## 6. Specific Recommendations for autoconstitution
 
 ### 6.1 License: MIT
 
@@ -414,7 +414,7 @@ swarm-research/
 
 ---
 
-## 7. Action Checklist for SwarmResearch Launch
+## 7. Action Checklist for autoconstitution Launch
 
 ### Pre-Launch
 - [ ] Choose MIT license
@@ -456,7 +456,7 @@ swarm-research/
 
 ## Conclusion
 
-The most successful open source ML projects share common patterns: permissive licensing, zero-dependency architecture, clear documentation, and welcoming community practices. By following these patterns, SwarmResearch can maximize both adoption and contribution.
+The most successful open source ML projects share common patterns: permissive licensing, zero-dependency architecture, clear documentation, and welcoming community practices. By following these patterns, autoconstitution can maximize both adoption and contribution.
 
 **Key Takeaways**:
 1. Use MIT license for maximum adoption
@@ -483,4 +483,4 @@ The most successful open source ML projects share common patterns: permissive li
 ---
 
 *Report compiled: 2026*
-*For: SwarmResearch Project Strategy*
+*For: autoconstitution Project Strategy*

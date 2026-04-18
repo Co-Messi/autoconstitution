@@ -1,7 +1,7 @@
-# SwarmResearch Performance Projection
+# autoconstitution Performance Projection
 ## Quantitative Performance Analysis vs Single-Agent Baseline
 
-**Based on:** PARL Research Findings + SwarmResearch Architecture Design  
+**Based on:** PARL Research Findings + autoconstitution Architecture Design  
 **Date:** April 2026  
 **Classification:** Performance Modeling Report
 
@@ -9,11 +9,11 @@
 
 ## Executive Summary
 
-Based on comprehensive analysis of PARL (Parallel-Agent Reinforcement Learning) research findings and the SwarmResearch architecture design, we project **significant performance advantages** over Karpathy's single-agent autoresearch baseline across all key metrics.
+Based on comprehensive analysis of PARL (Parallel-Agent Reinforcement Learning) research findings and the autoconstitution architecture design, we project **significant performance advantages** over Karpathy's single-agent autoresearch baseline across all key metrics.
 
 ### Key Projections at a Glance
 
-| Metric | Single-Agent Baseline | SwarmResearch Projection | Improvement |
+| Metric | Single-Agent Baseline | autoconstitution Projection | Improvement |
 |--------|----------------------|--------------------------|-------------|
 | **Time to 90% Target** | 100 min | 22-28 min | **4.0-4.5x faster** |
 | **Time to 95% Target** | 180 min | 45-55 min | **3.3-4.0x faster** |
@@ -35,7 +35,7 @@ Based on PARL's documented **4.5x wall-clock speedup** and the empirical study f
 │                    TIME-TO-TARGET PROJECTIONS                                │
 ├─────────────────────────────────────────────────────────────────────────────┤
 │                                                                              │
-│  Target Level    │ Single-Agent  │ SwarmResearch │ Speedup    │ Confidence  │
+│  Target Level    │ Single-Agent  │ autoconstitution │ Speedup    │ Confidence  │
 │  ────────────────┼───────────────┼───────────────┼────────────┼─────────────│
 │  90% of optimum  │ 100 min       │ 22-28 min     │ 3.6-4.5x   │ High        │
 │  95% of optimum  │ 180 min       │ 45-55 min     │ 3.3-4.0x   │ High        │
@@ -67,7 +67,7 @@ Based on PARL's documented **4.5x wall-clock speedup** and the empirical study f
 
 ### 1.3 Speedup Breakdown by Phase
 
-| Phase | Single-Agent | SwarmResearch | Speedup Factor | Rationale |
+| Phase | Single-Agent | autoconstitution | Speedup Factor | Rationale |
 |-------|-------------|---------------|----------------|-----------|
 | **Initial Exploration** | 30 min | 6-8 min | 3.8-5.0x | Parallel search space coverage |
 | **Rapid Improvement** | 60 min | 15-20 min | 3.0-4.0x | Concurrent experiment execution |
@@ -87,7 +87,7 @@ Based on PARL's documented **4.5x wall-clock speedup** and the empirical study f
 │                    IMPROVEMENT DISCOVERY PROJECTIONS                         │
 ├─────────────────────────────────────────────────────────────────────────────┤
 │                                                                              │
-│  Metric                    │ Single-Agent │ SwarmResearch │ Ratio           │
+│  Metric                    │ Single-Agent │ autoconstitution │ Ratio           │
 │  ──────────────────────────┼──────────────┼───────────────┼─────────────────│
 │  Experiments per hour      │ 12           │ 60-120        │ 5-10x           │
 │  Valid improvements/day    │ 15-20        │ 60-120        │ 4-6x            │
@@ -108,7 +108,7 @@ Where:
 - Base_Rate = 12 experiments/hour (single-agent)
 - N_Agents = 10 (Tier 1) to 100 (Tier 4)
 - Parallel_Efficiency = 0.7-0.9 (accounts for coordination overhead)
-- Success_Rate = 0.90-0.95 (SwarmResearch vs 0.85 baseline)
+- Success_Rate = 0.90-0.95 (autoconstitution vs 0.85 baseline)
 
 Example Calculation (Tier 2, 50 agents):
 Experiments/Hour = 12 × 50 × 0.75 × 0.92 = 414 experiments/hour theoretical
@@ -138,7 +138,7 @@ Experiments/Hour = 12 × 50 × 0.75 × 0.92 = 414 experiments/hour theoretical
 │                    IMPROVEMENT QUALITY DISTRIBUTION                          │
 ├─────────────────────────────────────────────────────────────────────────────┤
 │                                                                              │
-│  Improvement Size    │ Single-Agent │ SwarmResearch │ Notes                  │
+│  Improvement Size    │ Single-Agent │ autoconstitution │ Notes                  │
 │  ────────────────────┼──────────────┼───────────────┼───────────────────────│
 │  Minor (< 2%)        │ 60%          │ 40%           │ Less redundant work    │
 │  Moderate (2-5%)     │ 30%          │ 40%           │ Sweet spot increases   │
@@ -159,7 +159,7 @@ Experiments/Hour = 12 × 50 × 0.75 × 0.92 = 414 experiments/hour theoretical
 ```
 Performance (% of Optimal)
     │
-100 ┤                                          ╭──── SwarmResearch
+100 ┤                                          ╭──── autoconstitution
     │                                    ╭────╯
  95 ┤                              ╭────╯
     │                        ╭────╯                    ╭──── Single-Agent
@@ -175,13 +175,13 @@ Performance (% of Optimal)
     └────┬────┬────┬────┬────┬────┬────┬────┬────┬────┬────┬────→ Time (hours)
           0   0.5   1    1.5   2    3    4    6    8   12   16   24
 
-    SwarmResearch: ═════════════════════════════════════════════════
+    autoconstitution: ═════════════════════════════════════════════════
     Single-Agent:  ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─
 ```
 
 ### 3.2 Curve Characteristics
 
-| Phase | Time Range | Single-Agent Behavior | SwarmResearch Behavior |
+| Phase | Time Range | Single-Agent Behavior | autoconstitution Behavior |
 |-------|-----------|----------------------|------------------------|
 | **Rapid Ascent** | 0-1 hour | Linear improvement, ~30% → 70% | Exponential improvement, ~30% → 85% |
 | **Diminishing Returns** | 1-4 hours | Logarithmic, 70% → 85% | Linear, 85% → 95% |
@@ -200,7 +200,7 @@ Where:
 - α₁ = 0.02 (decay factor)
 ```
 
-**SwarmResearch Curve Model:**
+**autoconstitution Curve Model:**
 ```
 P_swarm(t) = P_max × (1 - e^(-λ₂t)) × (1 - α₂t) × (1 + β√N_agents)
 
@@ -214,7 +214,7 @@ Where:
 
 ### 3.4 Critical Points Analysis
 
-| Metric | Single-Agent | SwarmResearch | Speedup |
+| Metric | Single-Agent | autoconstitution | Speedup |
 |--------|-------------|---------------|---------|
 | **Time to 70%** | 45 min | 12-15 min | 3.0-3.8x |
 | **Time to 85%** | 90 min | 25-30 min | 3.0-3.6x |
@@ -233,7 +233,7 @@ Where:
 │                    WALL-CLOCK TIME COMPARISON (4-Hour Budget)                │
 ├─────────────────────────────────────────────────────────────────────────────┤
 │                                                                              │
-│  Activity                │ Single-Agent │ SwarmResearch │ Time Saved        │
+│  Activity                │ Single-Agent │ autoconstitution │ Time Saved        │
 │  ────────────────────────┼──────────────┼───────────────┼───────────────────│
 │  Experiment execution    │ 180 min      │ 45 min        │ 135 min (4x)      │
 │  Result analysis         │ 20 min       │ 10 min        │ 10 min (2x)       │
@@ -277,7 +277,7 @@ Cycle Time: ~30 minutes per experiment
 Experiments per hour: 2 (theoretical) → 12 (with early stopping)
 ```
 
-**SwarmResearch Critical Path:**
+**autoconstitution Critical Path:**
 ```
 [Orchestrate] → [Parallel Agents] → [Aggregate] → [Cross-Pollinate] → ...
     2min         [10× parallel]        3min           2min
@@ -292,11 +292,11 @@ Experiments per hour: 27 (theoretical) → 60-120 (with early stopping + GPU lim
 CriticalSteps = Σ_t (S_main^(t) + max_i S_sub,i^(t))
 
 Single-Agent: 30 min × N_experiments (sequential)
-SwarmResearch: 22 min × N_batches (parallel within batch)
+autoconstitution: 22 min × N_batches (parallel within batch)
 
 For 100 experiments:
 - Single-Agent: 3,000 minutes (50 hours)
-- SwarmResearch: 220 minutes (3.7 hours) = 13.6x faster
+- autoconstitution: 220 minutes (3.7 hours) = 13.6x faster
 ```
 
 ---
@@ -310,7 +310,7 @@ For 100 experiments:
 │                    IMPROVEMENT QUALITY PROJECTIONS                           │
 ├─────────────────────────────────────────────────────────────────────────────┤
 │                                                                              │
-│  Quality Metric          │ Single-Agent │ SwarmResearch │ Improvement       │
+│  Quality Metric          │ Single-Agent │ autoconstitution │ Improvement       │
 │  ────────────────────────┼──────────────┼───────────────┼───────────────────│
 │  Best Performance Gap    │ 8-12%        │ 3-5%          │ 2-3x better       │
 │  Average Improvement     │ 2.8%         │ 4.2%          │ +50%              │
@@ -351,7 +351,7 @@ Based on Quality-Diversity Optimization research:
 │                    QUALITY EVOLUTION OVER TIME                               │
 ├─────────────────────────────────────────────────────────────────────────────┤
 │                                                                              │
-│  Time     │ Single-Agent Quality │ SwarmResearch Quality │ Quality Gap      │
+│  Time     │ Single-Agent Quality │ autoconstitution Quality │ Quality Gap      │
 │  ─────────┼──────────────────────┼───────────────────────┼──────────────────│
 │  1 hour   │ 70% ± 8%             │ 85% ± 5%              │ +15 points       │
 │  4 hours  │ 85% ± 5%             │ 95% ± 3%              │ +10 points       │
@@ -365,7 +365,7 @@ Based on Quality-Diversity Optimization research:
 
 ### 5.4 Failure Mode Analysis
 
-| Failure Type | Single-Agent | SwarmResearch | Improvement |
+| Failure Type | Single-Agent | autoconstitution | Improvement |
 |-------------|-------------|---------------|-------------|
 | **Invalid configs** | 10% | 5% | -50% (ratchet validation) |
 | **Training crashes** | 3% | 2% | -33% (pre-flight checks) |
@@ -467,7 +467,7 @@ Based on Quality-Diversity Optimization research:
 
 ### 8.2 Comparative Advantage by Task Type
 
-| Task Type | SwarmResearch Advantage | Magnitude |
+| Task Type | autoconstitution Advantage | Magnitude |
 |-----------|------------------------|-----------|
 | **Hyperparameter search** | Very High | 4-5x speedup |
 | **Architecture search** | High | 3-4x speedup |
@@ -475,7 +475,7 @@ Based on Quality-Diversity Optimization research:
 | **Sequential refactoring** | Moderate | 1.5-2x speedup |
 | **Deep theoretical work** | Low-Moderate | 1.2-1.5x speedup |
 
-### 8.3 When SwarmResearch Excels Most
+### 8.3 When autoconstitution Excels Most
 
 Based on empirical research findings:
 
@@ -508,4 +508,4 @@ Based on empirical research findings:
 
 *Document Version: 1.0*  
 *Generated: April 2026*  
-*Classification: Performance Modeling Report for SwarmResearch*
+*Classification: Performance Modeling Report for autoconstitution*

@@ -1,8 +1,8 @@
-# SwarmResearch Hardware Abstraction Layer (HAL)
+# autoconstitution Hardware Abstraction Layer (HAL)
 
 ## Executive Summary
 
-The Hardware Abstraction Layer (HAL) enables SwarmResearch to run identically across hardware tiers from Apple Silicon M4 (using Core ML/Neural Engine) to NVIDIA H100 clusters (using CUDA/distributed inference) with only a single configuration flag change.
+The Hardware Abstraction Layer (HAL) enables autoconstitution to run identically across hardware tiers from Apple Silicon M4 (using Core ML/Neural Engine) to NVIDIA H100 clusters (using CUDA/distributed inference) with only a single configuration flag change.
 
 **Design Principle**: `hardware: "auto" | "m4" | "h100" | "cpu"` — one flag, zero code changes.
 
@@ -12,7 +12,7 @@ The Hardware Abstraction Layer (HAL) enables SwarmResearch to run identically ac
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│                         SwarmResearch Application                            │
+│                         autoconstitution Application                            │
 ├─────────────────────────────────────────────────────────────────────────────┤
 │                         ComputeEngine (Abstract)                             │
 │  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────┐ │
@@ -1592,9 +1592,9 @@ presets:
       pipeline_parallel_size: 1
     kubernetes:
       enabled: true
-      namespace: swarm-research
-      service_name: swarm-research-head
-      image: swarmresearch/h100:latest
+      namespace: autoconstitution
+      service_name: autoconstitution-head
+      image: autoconstitution/h100:latest
       resources:
         nvidia.com/gpu: 8
         memory: 640Gi
@@ -1749,7 +1749,7 @@ class TrainingConfig:
     
 @dataclass
 class SwarmConfig:
-    """Main SwarmResearch configuration."""
+    """Main autoconstitution configuration."""
     hardware: str = "auto"  # auto, m4, m3, m2, m1, h100, a100, rtx4090, cpu
     model_id: str = "microsoft/DialoGPT-medium"
     hardware_config: HardwareConfig = field(default_factory=HardwareConfig)
@@ -1805,7 +1805,7 @@ class SwarmConfig:
 
 # Example usage configuration
 example_config = """
-# SwarmResearch Configuration
+# autoconstitution Configuration
 # Set hardware: "m4" for Apple Silicon, "h100" for NVIDIA cluster
 
 hardware: "auto"  # auto-detect, or specify: m4, m3, h100, a100, cpu

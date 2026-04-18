@@ -1,5 +1,5 @@
 # PARL (Parallel-Agent Reinforcement Learning) Architecture Analysis
-## Comprehensive Research Report for SwarmResearch Orchestrator Design
+## Comprehensive Research Report for autoconstitution Orchestrator Design
 
 **Source:** Kimi K2.5 Technical Report + Open-Source Community Implementation  
 **Date:** Research compiled from arXiv:2602.02276v1 and community implementations  
@@ -540,16 +540,16 @@ class AgentLifecycle:
 
 ---
 
-## 9. Implementation Recommendations for SwarmResearch
+## 9. Implementation Recommendations for autoconstitution
 
 ### 9.1 Core Components to Implement
 
 ```python
-# Recommended SwarmResearch architecture
+# Recommended autoconstitution architecture
 
 class SwarmOrchestrator:
     """
-    PARL-inspired orchestrator for SwarmResearch
+    PARL-inspired orchestrator for autoconstitution
     """
     def __init__(self, config: OrchestratorConfig):
         self.reward_fn = PARLReward(
@@ -580,7 +580,7 @@ class SwarmOrchestrator:
 ### 9.2 Recommended Directory Structure
 
 ```
-swarmresearch/
+autoconstitution/
 ├── orchestrator/
 │   ├── __init__.py
 │   ├── core.py              # Main orchestrator class
@@ -703,7 +703,7 @@ training:
 ### 10.1 Complete PARL Reward Implementation
 
 ```python
-# swarmresearch/rewards/parl_reward.py
+# autoconstitution/rewards/parl_reward.py
 import torch
 import torch.nn as nn
 
@@ -799,7 +799,7 @@ class PARLReward(nn.Module):
 ### 10.2 Critical Steps Metric Implementation
 
 ```python
-# swarmresearch/metrics/critical_steps.py
+# autoconstitution/metrics/critical_steps.py
 import torch
 import torch.nn as nn
 
@@ -844,7 +844,7 @@ class CriticalStepsMetric(nn.Module):
 ### 10.3 Orchestrator Core Implementation
 
 ```python
-# swarmresearch/orchestrator/core.py
+# autoconstitution/orchestrator/core.py
 from typing import List, Dict, Any
 import asyncio
 
@@ -981,7 +981,7 @@ class SwarmOrchestrator:
 
 ---
 
-## 12. Summary for SwarmResearch Implementation
+## 12. Summary for autoconstitution Implementation
 
 ### Critical Success Factors
 
@@ -1005,4 +1005,4 @@ class SwarmOrchestrator:
 
 ---
 
-*Report compiled for SwarmResearch orchestrator design. All technical details extracted from publicly available sources including the Kimi K2.5 technical report and open-source community implementations.*
+*Report compiled for autoconstitution orchestrator design. All technical details extracted from publicly available sources including the Kimi K2.5 technical report and open-source community implementations.*

@@ -1,8 +1,8 @@
-# Rigorous Benchmark Design: SwarmResearch vs Single-Agent Baseline
+# Rigorous Benchmark Design: autoconstitution vs Single-Agent Baseline
 
 ## Executive Summary
 
-This report presents a comprehensive framework for designing rigorous benchmarks that demonstrate SwarmResearch's advantages over Karpathy's single-agent autoresearch baseline. Drawing from empirical studies on multi-agent collaboration, statistical rigor in ML evaluation, and reproducibility best practices, we establish a benchmark protocol that any user can run on their hardware.
+This report presents a comprehensive framework for designing rigorous benchmarks that demonstrate autoconstitution's advantages over Karpathy's single-agent autoresearch baseline. Drawing from empirical studies on multi-agent collaboration, statistical rigor in ML evaluation, and reproducibility best practices, we establish a benchmark protocol that any user can run on their hardware.
 
 ---
 
@@ -279,7 +279,7 @@ CI = [θ^(α₁)*, θ^(α₂)*] with bias correction
 
 #### 5.1.3 Hypothesis Testing
 
-For comparing SwarmResearch vs baseline:
+For comparing autoconstitution vs baseline:
 
 **Paired t-test** (same random seeds for both systems):
 ```
@@ -373,7 +373,7 @@ Provide the following artifacts with benchmark release:
 ```
 benchmark_package/
 ├── code/
-│   ├── swarm_research/          # SwarmResearch implementation
+│   ├── swarm_research/          # autoconstitution implementation
 │   ├── single_agent_baseline/   # Karpathy-style baseline
 │   ├── evaluation/              # Evaluation scripts
 │   └── utils/                   # Shared utilities
@@ -399,7 +399,7 @@ benchmark_package/
 
 ---
 
-## 7. Specific Benchmark Protocol for SwarmResearch
+## 7. Specific Benchmark Protocol for autoconstitution
 
 ### 7.1 Benchmark Task: NanoGPT Optimization
 
@@ -519,7 +519,7 @@ def run_benchmark(system, time_budget_hours, n_seeds=5):
 - Full context of all previous experiments
 - Simple accept/reject based on metric improvement
 
-#### 7.3.2 SwarmResearch Variants
+#### 7.3.2 autoconstitution Variants
 
 **Variant A: Parallel Subagent Mode**
 - Multiple agents explore in parallel
@@ -538,7 +538,7 @@ def run_benchmark(system, time_budget_hours, n_seeds=5):
 
 ### 7.4 Success Criteria
 
-SwarmResearch demonstrates advantage when:
+autoconstitution demonstrates advantage when:
 
 | Criterion | Threshold | Evidence |
 |-----------|-----------|----------|
@@ -660,10 +660,10 @@ def analyze_benchmark_results(results_dir):
 ### 9.3 Report Template
 
 ```markdown
-# Benchmark Results: SwarmResearch vs Single-Agent
+# Benchmark Results: autoconstitution vs Single-Agent
 
 ## Executive Summary
-- **Winner**: [SwarmResearch | Single-Agent | Tie]
+- **Winner**: [autoconstitution | Single-Agent | Tie]
 - **Key Finding**: [One-sentence summary]
 - **Statistical Significance**: p = [value] < 0.05
 
@@ -676,21 +676,21 @@ def analyze_benchmark_results(results_dir):
 ## Results
 
 ### Primary Metrics
-| Metric | SwarmResearch | Single-Agent | p-value | Effect Size |
+| Metric | autoconstitution | Single-Agent | p-value | Effect Size |
 |--------|---------------|--------------|---------|-------------|
 | WCTT_95 (min) | X ± Y [CI] | A ± B [CI] | 0.0XX | 0.XX |
 | Best val_bpb | X ± Y [CI] | A ± B [CI] | 0.0XX | 0.XX |
 | Success Rate | X% ± Y% | A% ± B% | 0.0XX | - |
 
 ### Diversity Metrics
-| Metric | SwarmResearch | Single-Agent | Ratio |
+| Metric | autoconstitution | Single-Agent | Ratio |
 |--------|---------------|--------------|-------|
 | Config Diversity | X | Y | X/Y |
 | Unique Optima | X | Y | X/Y |
 | Search Coverage | X% | Y% | X/Y |
 
 ### Exploration Analysis
-- Exploration Ratio: SwarmResearch X% vs Single-Agent Y%
+- Exploration Ratio: autoconstitution X% vs Single-Agent Y%
 - Search Space Novelty: [Comparison]
 
 ## Conclusions
@@ -768,4 +768,4 @@ SEEDS = [42, 123, 456, 789, 1024, 2024, 31415, 271828, 161803, 999999]
 
 *Document Version: 1.0*
 *Last Updated: 2025*
-*For questions or updates, refer to the SwarmResearch repository*
+*For questions or updates, refer to the autoconstitution repository*

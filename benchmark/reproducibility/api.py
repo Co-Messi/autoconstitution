@@ -1,5 +1,5 @@
 """
-Programmatic reproduction API for SwarmResearch benchmark.
+Programmatic reproduction API for autoconstitution benchmark.
 
 This module provides a high-level API for running the benchmark
 reproducibility pipeline programmatically.
@@ -102,7 +102,7 @@ class ReproductionRunner:
         
         try:
             result = subprocess.run(
-                ["python", "-m", "swarmresearch.download", "--dataset", "--model", "--verify"],
+                ["python", "-m", "autoconstitution.download", "--dataset", "--model", "--verify"],
                 capture_output=True,
                 text=True,
                 check=True
@@ -111,7 +111,7 @@ class ReproductionRunner:
         except subprocess.CalledProcessError as e:
             raise RuntimeError(f"Asset download failed: {e.stderr}")
         except FileNotFoundError:
-            self._log("  Warning: swarmresearch package not found, skipping download")
+            self._log("  Warning: autoconstitution package not found, skipping download")
             self._log("  Please ensure assets are manually placed")
         
         return self
@@ -135,16 +135,16 @@ class ReproductionRunner:
         
         self._log("  Dependencies verified")
         
-        # Try to run swarmresearch verify if available
+        # Try to run autoconstitution verify if available
         try:
             subprocess.run(
-                ["python", "-m", "swarmresearch.verify", "--full"],
+                ["python", "-m", "autoconstitution.verify", "--full"],
                 capture_output=True,
                 check=True
             )
-            self._log("  SwarmResearch verification passed")
+            self._log("  autoconstitution verification passed")
         except (subprocess.CalledProcessError, FileNotFoundError):
-            self._log("  SwarmResearch verification skipped")
+            self._log("  autoconstitution verification skipped")
         
         return self
     
@@ -165,7 +165,7 @@ class ReproductionRunner:
         
         try:
             result = subprocess.run([
-                "python", "-m", "swarmresearch.benchmark",
+                "python", "-m", "autoconstitution.benchmark",
                 "--config", str(self.config_path),
                 "--output", str(self.results_file),
                 "--seed", str(self.seed)
@@ -177,8 +177,8 @@ class ReproductionRunner:
             raise RuntimeError(f"Benchmark execution failed: {e.stderr}")
         except FileNotFoundError:
             raise RuntimeError(
-                "swarmresearch package not found. "
-                "Please install swarmresearch-benchmark package."
+                "autoconstitution package not found. "
+                "Please install autoconstitution-benchmark package."
             )
         
         # Load results
@@ -208,7 +208,7 @@ class ReproductionRunner:
         
         try:
             subprocess.run([
-                "python", "-m", "swarmresearch.report",
+                "python", "-m", "autoconstitution.report",
                 "--results", str(self.results_file),
                 "--output", str(report_file)
             ], capture_output=True, check=True)
@@ -352,7 +352,7 @@ if __name__ == "__main__":
     import argparse
     
     parser = argparse.ArgumentParser(
-        description="SwarmResearch Benchmark Reproduction API"
+        description="autoconstitution Benchmark Reproduction API"
     )
     parser.add_argument(
         "--seed",

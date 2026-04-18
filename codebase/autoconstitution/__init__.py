@@ -1,9 +1,9 @@
 """
-autoconstitution — Constitutional AI hierarchy for recursive self-improvement.
+autoconstitution — multi-agent autoresearch under an editable constitution.
 
-Extends Karpathy's autoresearch paradigm (single-agent ratcheted experiments)
-into a hierarchical Constitutional AI system where models critique, revise, and
-fine-tune each other across student / judge / meta-judge tiers.
+Extends Karpathy's autoresearch paradigm from a single improving loop into a
+multi-agent system where models can critique, revise, judge, and preserve
+improvements across student / critic / judge / meta-judge style roles.
 
 Public API surface:
     - CLI app (typer) for running experiments
@@ -80,6 +80,19 @@ from autoconstitution.ratchet import (
     create_target_ratchet,
 )
 
+# --- CAI loop primitives -------------------------------------------------
+from autoconstitution.cai import (
+    CAIRole,
+    CritiqueRevisionLoop,
+    CritiqueResult,
+    JudgeAgent,
+    MetaJudgeAgent,
+    PreferencePair,
+    PreferencePairBuilder,
+    RevisionResult,
+    StudentAgent,
+)
+
 # --- Config (Pydantic BaseSettings) -------------------------------------
 from autoconstitution.config import (
     AgentConfig,
@@ -149,6 +162,16 @@ __all__ = [
     "create_accuracy_ratchet",
     "create_loss_ratchet",
     "create_target_ratchet",
+    # CAI loop
+    "CAIRole",
+    "StudentAgent",
+    "JudgeAgent",
+    "MetaJudgeAgent",
+    "CritiqueRevisionLoop",
+    "CritiqueResult",
+    "RevisionResult",
+    "PreferencePair",
+    "PreferencePairBuilder",
     # Config
     "SwarmConfig",
     "ExperimentConfig",

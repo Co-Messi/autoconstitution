@@ -87,7 +87,7 @@ class SwarmConfig(BaseSettings):
     """
     Main configuration class for autoconstitution.
     
-    This class manages all tunable parameters for the swarm research framework,
+    This class manages all tunable parameters for the autoconstitution framework,
     including agent limits, budget constraints, provider settings, and
     performance metrics.
     

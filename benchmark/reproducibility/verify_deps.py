@@ -1,5 +1,5 @@
 """
-Dependency version verification for SwarmResearch benchmark.
+Dependency version verification for autoconstitution benchmark.
 
 This module verifies that all required dependencies are installed
 with the correct versions for reproducible benchmark execution.

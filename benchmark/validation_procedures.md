@@ -1,10 +1,10 @@
-# SwarmResearch Benchmark Validation Procedures
+# autoconstitution Benchmark Validation Procedures
 
 ## Executive Summary
 
-This document establishes comprehensive validation procedures for SwarmResearch benchmarks to ensure they measure what they claim to measure. The validation framework covers five critical dimensions of validity: construct validity, internal validity, external validity, face validity, and validation experiments.
+This document establishes comprehensive validation procedures for autoconstitution benchmarks to ensure they measure what they claim to measure. The validation framework covers five critical dimensions of validity: construct validity, internal validity, external validity, face validity, and validation experiments.
 
-**Purpose**: Provide rigorous, reproducible procedures for validating that SwarmResearch benchmarks accurately measure multi-agent research system performance relative to single-agent baselines.
+**Purpose**: Provide rigorous, reproducible procedures for validating that autoconstitution benchmarks accurately measure multi-agent research system performance relative to single-agent baselines.
 
 ---
 
@@ -12,14 +12,14 @@ This document establishes comprehensive validation procedures for SwarmResearch 
 
 ### 1.1 Definition
 
-Construct validity ensures that the benchmark measures the theoretical constructs it claims to measure. For SwarmResearch, this means verifying that:
+Construct validity ensures that the benchmark measures the theoretical constructs it claims to measure. For autoconstitution, this means verifying that:
 - The benchmark actually measures multi-agent collaboration benefits
 - Metrics accurately capture "research quality" and "research efficiency"
 - The construct of "swarm intelligence" is properly operationalized
 
 ### 1.2 Threats to Construct Validity
 
-| Threat | Description | Impact on SwarmResearch |
+| Threat | Description | Impact on autoconstitution |
 |--------|-------------|------------------------|
 | **Underrepresentation** | Benchmark only captures part of the construct | May miss emergent collaboration benefits |
 | **Irrelevant Variance** | Measures unrelated to multi-agent advantages | Confuses single-agent vs multi-agent differences |
@@ -506,7 +506,7 @@ External validity ensures that benchmark results generalize to real-world scenar
 
 ### 3.2 Threats to External Validity
 
-| Threat | Description | Impact on SwarmResearch |
+| Threat | Description | Impact on autoconstitution |
 |--------|-------------|------------------------|
 | **Population Validity** | Results don't generalize to other user populations | May only work for specific use cases |
 | **Ecological Validity** | Artificial conditions don't reflect real usage | Lab conditions differ from production |
@@ -1098,7 +1098,7 @@ Face validity ensures that the benchmark appears to measure what it claims to me
 **Design**:
 ```python
 ABLATION_CONDITIONS = {
-    'full_system': 'Complete SwarmResearch system',
+    'full_system': 'Complete autoconstitution system',
     'no_coordination': 'Agents work independently, no coordination',
     'no_specialization': 'All agents have same role/capabilities',
     'no_communication': 'Agents cannot communicate with each other',
@@ -1688,4 +1688,4 @@ VALIDATION_VERSIONING = {
 
 *Document Version: 1.0*
 *Last Updated: 2025*
-*For questions or updates, refer to the SwarmResearch repository*
+*For questions or updates, refer to the autoconstitution repository*
