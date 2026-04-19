@@ -203,6 +203,98 @@ class TestParseErrors:
         assert result.converged is True
 
 
+class TestScorerHook:
+    """The optional scorer gate turns CritiqueRevisionLoop from a blind
+    executor into a ratcheted one. A False return rolls back the revision
+    and halts — the DPO pair keeps the last-known-good answer.
+    """
+
+    @pytest.mark.asyncio
+    async def test_scorer_rejects_revision_final_answer_stays_initial(self) -> None:
+        loop, _, _ = _make_loop(
+            student_responses=["good answer", "bad revision"],
+            judge_responses=[
+                '{"verdict": "needs_revision", "critiques":'
+                ' [{"principle":"P1","quote":"good answer","fix":"x",'
+                '"severity":"major"}]}',
+            ],
+        )
+
+        calls: list[tuple[str, str]] = []
+
+        def reject_all(previous: str, revised: str) -> bool:
+            calls.append((previous, revised))
+            return False
+
+        result = await loop.run("prompt", scorer=reject_all)
+
+        assert calls == [("good answer", "bad revision")]
+        assert result.final_answer == "good answer"  # rolled back
+        assert result.initial_answer == "good answer"
+        assert result.converged is False
+
+    @pytest.mark.asyncio
+    async def test_scorer_accepts_revision_loop_continues(self) -> None:
+        loop, _, _ = _make_loop(
+            student_responses=["v0", "v1"],
+            judge_responses=[
+                '{"verdict": "needs_revision", "critiques":'
+                ' [{"principle":"P1","quote":"v0","fix":"x","severity":"major"}]}',
+                '{"verdict": "compliant", "critiques": []}',
+            ],
+        )
+
+        def accept_all(_previous: str, _revised: str) -> bool:
+            return True
+
+        result = await loop.run("prompt", scorer=accept_all)
+
+        assert result.final_answer == "v1"
+        assert result.converged is True
+
+    @pytest.mark.asyncio
+    async def test_async_scorer_awaited_correctly(self) -> None:
+        loop, _, _ = _make_loop(
+            student_responses=["v0", "v1"],
+            judge_responses=[
+                '{"verdict": "needs_revision", "critiques":'
+                ' [{"principle":"P1","quote":"v0","fix":"x","severity":"major"}]}',
+            ],
+        )
+
+        call_count = 0
+
+        async def async_reject(_prev: str, _rev: str) -> bool:
+            nonlocal call_count
+            call_count += 1
+            await asyncio.sleep(0)
+            return False
+
+        result = await loop.run("prompt", scorer=async_reject)
+
+        assert call_count == 1
+        assert result.final_answer == "v0"
+
+    @pytest.mark.asyncio
+    async def test_buggy_scorer_treated_as_reject_not_crash(self) -> None:
+        loop, _, _ = _make_loop(
+            student_responses=["v0", "v1"],
+            judge_responses=[
+                '{"verdict": "needs_revision", "critiques":'
+                ' [{"principle":"P1","quote":"v0","fix":"x","severity":"major"}]}',
+            ],
+        )
+
+        def buggy_scorer(_prev: str, _rev: str) -> bool:
+            raise ValueError("scorer bug")
+
+        result = await loop.run("prompt", scorer=buggy_scorer)
+
+        # Exception swallowed, treated as reject, loop halts cleanly.
+        assert result.final_answer == "v0"
+        assert result.converged is False
+
+
 class TestVerdictNormalization:
     """Local judges emit casing/spacing variants — make sure the loop still
     converges on 'Compliant', 'needs revision', 'Needs-Revision', etc.

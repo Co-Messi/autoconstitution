@@ -27,11 +27,22 @@ Example:
 from __future__ import annotations
 
 import asyncio
+import inspect
 import json
 import logging
 from collections.abc import AsyncIterator, Awaitable, Callable
 from dataclasses import dataclass, field
-from typing import Any, Literal
+from typing import Any, Literal, Union
+
+# A scorer is a user-supplied oracle that says "keep this revision?" (True)
+# or "reject it, it's worse" (False). Sync or async. Called with the previous
+# answer and the revised answer — returning False causes the loop to roll
+# back to the previous answer and halt, preventing a hallucinating Judge
+# from degrading the Student's output into the DPO pair.
+Scorer = Union[
+    Callable[[str, str], bool],
+    Callable[[str, str], Awaitable[bool]],
+]
 
 from autoconstitution.cai.hierarchy import JudgeAgent, StudentAgent
 from autoconstitution.ui.events import (
@@ -147,14 +158,25 @@ class CritiqueRevisionLoop:
         prompt: str,
         *,
         renderer: Renderer | None = None,
+        scorer: Scorer | None = None,
     ) -> RevisionResult:
         """Run the loop for a single prompt. Returns full trace.
 
         Args:
             prompt: The user prompt to answer.
-            on_event: Optional callback invoked for every lifecycle event.
+            renderer: Optional callback invoked for every lifecycle event.
                 Renderers (live dashboard, line logger, JSON emitter) plug in
                 here without the loop needing to know how they display.
+            scorer: Optional ground-truth oracle called on every accepted
+                revision as ``scorer(previous_answer, revised_answer)``.
+                Sync or async. If it returns ``False``, the loop rolls the
+                revision back and halts — the last-known-good answer stays
+                in ``final_answer``, protecting DPO pairs from regressions
+                that a hallucinating Judge would have quietly accepted.
+                Pass a pytest wrapper, a rules engine, a rubric-checker —
+                anything that answers "is this revision actually better?"
+                For code tasks, ``autoconstitution.benchmark.tdd_loop`` is
+                a pre-built scorer that uses hidden tests directly.
         """
         emit = _make_emitter(renderer)
 
@@ -264,6 +286,22 @@ class CritiqueRevisionLoop:
                 emit(RoundEnd(round=round_num, converged=False))
                 break
 
+            # Optional ground-truth gate. If the caller supplied a scorer
+            # (pytest wrapper, rules engine, whatever), ask it whether the
+            # revision is actually an improvement before we accept it. A
+            # False verdict means the Judge's critique led the Student
+            # astray — we keep the previous answer and halt the loop so
+            # the DPO pair stays clean.
+            if scorer is not None:
+                accepted = await _run_scorer(scorer, current_answer, revised)
+                if not accepted:
+                    logger.info(
+                        "scorer rejected revision on round %d; rolling back",
+                        round_num,
+                    )
+                    emit(RoundEnd(round=round_num, converged=False))
+                    break
+
             current_answer = revised
             emit(RoundEnd(round=round_num, converged=False))
 
@@ -282,6 +320,7 @@ class CritiqueRevisionLoop:
         *,
         concurrency: int = 4,
         renderer: Renderer | None = None,
+        scorer: Scorer | None = None,
         return_exceptions: bool = False,
     ) -> list[RevisionResult] | list[RevisionResult | BaseException]:
         """Run the loop across a batch of prompts with bounded concurrency.
@@ -292,6 +331,8 @@ class CritiqueRevisionLoop:
             renderer: Optional renderer, invoked per-event across all prompts.
                 Note: events from concurrent runs are interleaved, so filter by
                 ``prompt`` / ``round`` if you need per-run timelines.
+            scorer: Optional ground-truth oracle, same contract as
+                :meth:`run`. Applied independently to each prompt.
             return_exceptions: When True, failed runs appear in the result list
                 as ``BaseException`` instances (matches ``asyncio.gather``).
                 When False, the first exception aborts the batch.
@@ -305,7 +346,7 @@ class CritiqueRevisionLoop:
 
         async def _bounded(p: str) -> RevisionResult:
             async with semaphore:
-                return await self.run(p, renderer=renderer)
+                return await self.run(p, renderer=renderer, scorer=scorer)
 
         if return_exceptions:
             return await asyncio.gather(
@@ -326,6 +367,24 @@ class CritiqueRevisionLoop:
             severity = c.get("severity", "moderate")
             lines.append(f"- [{principle}] ({severity}) Offending: {quote!r} → Fix: {fix}")
         return "\n".join(lines)
+
+
+async def _run_scorer(scorer: Scorer, previous: str, revised: str) -> bool:
+    """Invoke a user scorer, auto-detecting sync vs async callables.
+
+    Caller passes either ``(prev, rev) -> bool`` or ``(prev, rev) -> Awaitable[bool]``.
+    A raised exception is treated as "reject" (don't propagate — a buggy
+    scorer must not crash the loop); the scorer's return value is coerced
+    to bool so truthy/falsy heuristics work.
+    """
+    try:
+        result = scorer(previous, revised)
+        if inspect.isawaitable(result):
+            result = await result
+    except Exception:  # noqa: BLE001 — user code; isolate failures
+        logger.exception("scorer raised; treating as reject")
+        return False
+    return bool(result)
 
 
 async def _run_role(
