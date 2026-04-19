@@ -72,17 +72,18 @@ cases move substantially, seven stay put, and nothing regresses:
 
 The underlying table, for completeness:
 
-| Config                              | Critic              |         Δ | 95% CI                 | Wins / Ties / Losses |
-| ----------------------------------- | ------------------- | --------: | ---------------------- | -------------------- |
-| Symmetric CAI (3b judge)            | llama3.2:3b judge   |   −0.1667 | single run             |        — / — / 4     |
-| Asymmetric CAI                      | 3b judge > 1b stu.  |   −0.1111 | single run             |        — / — / 5     |
-| Test-grounded (before bug fixes)    | pytest output       |   +0.0741 | [+0.0000, +0.2222]     |       1 / 11 / 0     |
-| **Test-grounded (after bug fixes)** | **pytest output**   | **+0.2513** | **[+0.0952, +0.4193]** |   **5 / 7 / 0**     |
+| Config                   | Critic              |         Δ | 95% CI                 | Wins / Ties / Losses |
+| ------------------------ | ------------------- | --------: | ---------------------- | -------------------- |
+| Symmetric CAI (3b judge) | llama3.2:3b judge   |   −0.1667 | single run             |        — / — / 4     |
+| Asymmetric CAI           | 3b judge > 1b stu.  |   −0.1111 | single run             |        — / — / 5     |
+| Test-grounded (baseline) | pytest output       |   +0.0741 | [+0.0000, +0.2222]     |       1 / 11 / 0     |
+| **Test-grounded (now)**  | **pytest output**   | **+0.2513** | **[+0.0952, +0.4193]** |   **5 / 7 / 0**     |
 
 The last two rows are the *same* `--critique-mode tests` code path measured
-before and after the two adversarial-review bug fixes
-([head-truncate on pytest fallback + discarded lateral moves](./docs/audits/2026-04-18-tdd-loop-review.md))
-landed. Same models, same dataset, same 5-round budget.
+before and after the
+[adversarial-review bug fixes](./docs/audits/2026-04-18-tdd-loop-review.md)
+landed. Same models, same dataset, same 5-round budget — only the code
+underneath changed.
 
 Lower CI bound is strictly positive (+9.5 pp). Zero losses across all three
 test-grounded configurations means no case got worse — the loop's downside
