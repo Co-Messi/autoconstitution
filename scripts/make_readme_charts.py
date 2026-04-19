@@ -32,7 +32,7 @@ OUT_DIR.mkdir(parents=True, exist_ok=True)
 CONFIGS = [
     ("Symmetric CAI\n(3b judge ↔ 3b student)", -0.1667, None, None, 4),
     ("Asymmetric CAI\n(3b judge > 1b student)", -0.1111, None, None, 5),
-    ("Test-grounded\n(baseline)", +0.0741, +0.0000, +0.2222, 0),
+    ("Test-grounded\n(before bug fixes)", +0.0741, +0.0000, +0.2222, 0),
     ("Test-grounded\n(after bug fixes)", +0.2513, +0.0952, +0.4193, 0),
 ]
 
