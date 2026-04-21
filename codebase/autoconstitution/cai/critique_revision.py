@@ -76,10 +76,16 @@ class CritiqueResult:
         """Parse a Judge's JSON-ish output into a structured verdict.
 
         The Judge is instructed to return JSON, but real models sometimes wrap
-        it in markdown code fences or prose. We try to be forgiving.
+        it in markdown code fences, ``<think>`` reasoning tags (MiniMax, R1),
+        or prose. We try to be forgiving.
         """
+        import re as _re
+        # Strip <think>...</think> reasoning blocks that precede the JSON.
+        # MiniMax-M2.7 and DeepSeek-R1-style models emit these.
+        stripped = _re.sub(
+            r"<think>.*?</think>", "", raw, flags=_re.DOTALL,
+        ).strip()
         # Strip common markdown fences.
-        stripped = raw.strip()
         if stripped.startswith("```"):
             # Remove first line and possible trailing ```.
             lines = stripped.split("\n")
