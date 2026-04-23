@@ -20,5 +20,11 @@ venv/
 env/
 
 benchmark/.env
+.env
 
 .worktrees/
+
+# Experimental research artifacts (local-only; commit deliberately if needed)
+artifacts/
+data/
+scripts/experiments/__pycache__/
