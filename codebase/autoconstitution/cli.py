@@ -64,6 +64,10 @@ legacy_app = typer.Typer(
 )
 app.add_typer(legacy_app, name="legacy")
 
+# ---- MANIFOLD Substrate subgroup -----------------------------------------
+from autoconstitution.substrate.cli import substrate_app  # noqa: E402
+app.add_typer(substrate_app, name="substrate")
+
 
 def _legacy_notice(name: str) -> None:
     """One-line deprecation notice printed at the top of every legacy command."""
