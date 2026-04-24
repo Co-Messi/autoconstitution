@@ -247,9 +247,12 @@ class SubstrateLoop:
                 all_packet_ids.append(skill.id)
 
                 # Shadow-validate before committing
+                async def _noop_run_fn(tid: str, sp: str) -> float:
+                    return 0.9
+
                 passed_sv, sv_report = await self._shadow_validator.validate(
                     skill,
-                    run_fn=lambda tid, sp: asyncio.coroutine(lambda: 0.9)(),
+                    run_fn=_noop_run_fn,
                 )
                 if passed_sv:
                     self._shadow_validator.commit(skill)
@@ -291,9 +294,12 @@ class SubstrateLoop:
         # Build justification proof from the claim packet
         justification = justification_proof(claim.id, self._state_graph)
 
-        # The "chosen" is the last trace revision (or original claim)
-        chosen_packet = trace_packets[-1] if trace_packets else claim
-        chosen_text = chosen_packet.content
+        # The "chosen" is the last REVISION packet (or original claim)
+        # We use final_text (from the critique/revise path) for the chosen text
+        # and find the matching packet id.
+        revision_packets = [p for p in trace_packets if p.type == PacketType.REVISION]
+        chosen_packet = revision_packets[-1] if revision_packets else claim
+        chosen_text = final_text  # use final_text from the loop, not packet content
 
         # Write episode summary
         episode = make_episode(
