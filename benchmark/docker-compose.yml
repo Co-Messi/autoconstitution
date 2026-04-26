@@ -1,0 +1,79 @@
+# docker-compose.yml
+# autoconstitution Benchmark Container Orchestration
+# Version: 1.0.0
+
+version: '3.8'
+
+services:
+  benchmark:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: autoconstitution/benchmark:1.0.0
+    container_name: autoconstitution-benchmark
+    
+    environment:
+      - SWARMRESEARCH_SEED=42
+      - SWARMRESEARCH_LOG_LEVEL=INFO
+      - PYTHONHASHSEED=42
+      - OMP_NUM_THREADS=8
+      - MKL_NUM_THREADS=8
+      
+    volumes:
+      - ./results:/benchmark/results
+      - ./configs:/benchmark/configs:ro
+      - ./models:/benchmark/models:ro
+      - ./datasets:/benchmark/datasets:ro
+      
+    # Resource limits for reproducibility
+    deploy:
+      resources:
+        limits:
+          cpus: '8'
+          memory: 16G
+        reservations:
+          cpus: '4'
+          memory: 8G
+    
+    # Ensure consistent CPU scheduling
+    cpu_count: 8
+    cpu_shares: 1024
+    
+    # Prevent swapping for consistent performance
+    mem_swappiness: 0
+    
+    command: >
+      --config /benchmark/configs/m4_baseline.yaml
+      --output /benchmark/results/
+      --seed 42
+
+  # Validation service
+  verify:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: autoconstitution/benchmark:1.0.0
+    container_name: autoconstitution-verify
+    command: >
+      python -m autoconstitution.verify --full
+    profiles:
+      - verify
+
+  # Reproducibility check service
+  reproducibility:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: autoconstitution/benchmark:1.0.0
+    container_name: autoconstitution-reproducibility
+    environment:
+      - SWARMRESEARCH_SEED=42
+    volumes:
+      - ./results:/benchmark/results
+    command: >
+      python -m reproducibility.check_reproducibility
+      --runs 3
+      --seed 42
+      --output /benchmark/results/reproducibility_test
+    profiles:
+      - reproducibility

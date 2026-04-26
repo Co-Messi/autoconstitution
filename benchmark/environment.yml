@@ -1,0 +1,25 @@
+# environment.yml
+# Conda environment specification for autoconstitution Benchmark
+# Version: 1.0.0
+
+name: autoconstitution-benchmark
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.11.7
+  - pip=24.0
+  - numpy=1.26.4
+  - scipy=1.12.0
+  - pandas=2.2.0
+  - pyyaml=6.0.1
+  - requests=2.31.0
+  - pytest=8.0.0
+  - pip:
+    - llama-cpp-python==0.2.90
+    - pydantic==2.7.0
+    - structlog==24.1.0
+    - rich==13.7.0
+    - tqdm==4.66.1
+    - click==8.1.7
+    - autoconstitution-benchmark==1.0.0

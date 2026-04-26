@@ -1,0 +1,21 @@
+# autoconstitution Configuration File
+# This is a sample configuration file for autoconstitution runs
+
+# Experiment metadata
+name: "sample_experiment"
+experiment_type: "consensus"  # Options: consensus, optimization, exploration, hybrid
+log_level: "info"             # Options: debug, info, warning, error, critical
+
+# Output settings
+output_dir: "./outputs"
+checkpoint_interval: 10       # Save checkpoint every N iterations
+save_visualizations: true
+
+# Swarm configuration
+swarm:
+  num_agents: 50
+  max_iterations: 500
+  convergence_threshold: 0.001
+  communication_range: 10.0
+  learning_rate: 0.01
+  random_seed: 42             # Set to null for random seed
